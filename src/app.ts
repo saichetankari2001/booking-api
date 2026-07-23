@@ -3,6 +3,7 @@ import { healthRouter } from './routes/health.routes';
 import { authRouter } from './routes/auth.routes';
 import { tableRouter } from './routes/table.routes';
 import { slotRouter } from './routes/slot.routes';
+import { bookingRouter } from './routes/booking.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 export function createApp(): Express {
@@ -12,6 +13,7 @@ export function createApp(): Express {
   app.use(authRouter);
   app.use(tableRouter);
   app.use(slotRouter);
+  app.use(bookingRouter);
   app.use(errorHandler);
   return app;
 }
