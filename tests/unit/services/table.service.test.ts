@@ -7,6 +7,25 @@ const mockedRepo = TableRepository as jest.Mocked<typeof TableRepository>;
 
 const table = { id: 1, name: 'Table 1', capacity: 4, description: null, createdAt: new Date() };
 
+describe('TableService.listAll', () => {
+  it('returns all tables from the repository', async () => {
+    mockedRepo.findAll.mockResolvedValue([table]);
+    const result = await TableService.listAll();
+    expect(result).toEqual([table]);
+    expect(mockedRepo.findAll).toHaveBeenCalled();
+  });
+});
+
+describe('TableService.create', () => {
+  it('creates a table via the repository', async () => {
+    const input = { name: 'Table 1', capacity: 4 };
+    mockedRepo.create.mockResolvedValue(table);
+    const result = await TableService.create(input);
+    expect(mockedRepo.create).toHaveBeenCalledWith(input);
+    expect(result).toEqual(table);
+  });
+});
+
 describe('TableService.update', () => {
   it('throws NotFoundError when table does not exist', async () => {
     mockedRepo.findById.mockResolvedValue(null);
