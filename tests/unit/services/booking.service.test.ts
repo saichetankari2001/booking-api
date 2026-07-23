@@ -149,6 +149,36 @@ describe('BookingService.create', () => {
 
     await expect(BookingService.create(validInput)).rejects.toThrow(NotFoundError);
   });
+
+  it('returns ConflictError (not the raw Prisma error) when BookingRepository.create hits the unique index race', async () => {
+    // Regression test for the double-booking TOCTOU: two concurrent requests can both
+    // pass the availability check and both reach BookingRepository.create, but only one
+    // insert can win against the `bookings_confirmed_table_slot_date_key` partial unique
+    // index. The loser's insert throws a P2002 PrismaClientKnownRequestError, which must
+    // be translated into a ConflictError rather than leaking as an unhandled 500.
+    mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(true);
+    mockedTableRepo.findAvailable.mockResolvedValue([
+      { id: 2, name: 'Table 2', capacity: 2, description: null, createdAt: new Date() },
+    ]);
+    const p2002Error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: '5.19.1',
+    });
+    mockedBookingRepo.create.mockRejectedValue(p2002Error);
+
+    await expect(BookingService.create(validInput)).rejects.toThrow(ConflictError);
+  });
+
+  it('re-throws non-P2002 errors from BookingRepository.create unchanged', async () => {
+    mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(true);
+    mockedTableRepo.findAvailable.mockResolvedValue([
+      { id: 2, name: 'Table 2', capacity: 2, description: null, createdAt: new Date() },
+    ]);
+    const otherError = new Error('connection lost');
+    mockedBookingRepo.create.mockRejectedValue(otherError);
+
+    await expect(BookingService.create(validInput)).rejects.toThrow('connection lost');
+  });
 });
 
 describe('BookingService.getById', () => {
@@ -221,6 +251,56 @@ describe('BookingService.adminUpdate', () => {
     mockedBookingRepo.findById.mockResolvedValue(existingBooking);
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
     await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(ConflictError);
+  });
+
+  it('returns ConflictError (not the raw Prisma error) when BookingRepository.updateTable hits the unique index race', async () => {
+    // Same TOCTOU shape as BookingService.create: the availability check and
+    // BookingRepository.updateTable aren't atomic, so a concurrent request can slip in
+    // between them and trip the `bookings_confirmed_table_slot_date_key` partial unique
+    // index. The P2002 error must be translated into a ConflictError, not leaked raw.
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue({
+      id: 7,
+      name: 'Table 7',
+      capacity: 4,
+      description: null,
+      createdAt: new Date(),
+    });
+    const p2002Error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: '5.19.1',
+    });
+    mockedBookingRepo.updateTable.mockRejectedValue(p2002Error);
+
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow(ConflictError);
+  });
+
+  it('re-throws non-P2002 errors from BookingRepository.updateTable unchanged', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue({
+      id: 7,
+      name: 'Table 7',
+      capacity: 4,
+      description: null,
+      createdAt: new Date(),
+    });
+    const otherError = new Error('connection lost');
+    mockedBookingRepo.updateTable.mockRejectedValue(otherError);
+
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow('connection lost');
+  });
+
+  it('treats tableId: 0 as a real reassignment request rather than a silent no-op', async () => {
+    // Regression test for the `if (input.tableId)` truthy-check bug: a hypothetical
+    // tableId of 0 must still trigger the reassignment path (even though Prisma serial
+    // IDs start at 1 and 0 is currently unreachable in practice, the check should be
+    // correct regardless).
+    const bookingOnTableFive = { ...existingBooking, tableId: 5 };
+    mockedBookingRepo.findById.mockResolvedValue(bookingOnTableFive);
+    mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
+
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 0 })).rejects.toThrow(ConflictError);
+    expect(mockedTableRepo.findAvailableWithSpecificTable).toHaveBeenCalledWith(0, 1, expect.any(Date), 2);
   });
 
   it('throws NotFoundError when booking does not exist', async () => {

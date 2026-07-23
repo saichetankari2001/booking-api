@@ -88,25 +88,38 @@ export const BookingService = {
       throw new NotFoundError('Time slot not found or inactive');
     }
 
-    return BookingRepository.runInTransaction(async (tx) => {
-      const assignedTableId = input.tableId
-        ? await assignSpecificTable(input.tableId, input.slotId, bookingDate, input.partySize, tx)
-        : await assignBestFitTable(input.slotId, bookingDate, input.partySize, tx);
+    try {
+      return await BookingRepository.runInTransaction(async (tx) => {
+        const assignedTableId = input.tableId
+          ? await assignSpecificTable(input.tableId, input.slotId, bookingDate, input.partySize, tx)
+          : await assignBestFitTable(input.slotId, bookingDate, input.partySize, tx);
 
-      return BookingRepository.create(
-        {
-          date: bookingDate,
-          partySize: input.partySize,
-          guestName: input.guestName,
-          guestEmail: input.guestEmail,
-          guestPhone: input.guestPhone,
-          notes: input.notes,
-          tableId: assignedTableId,
-          slotId: input.slotId,
-        },
-        tx,
-      );
-    });
+        return BookingRepository.create(
+          {
+            date: bookingDate,
+            partySize: input.partySize,
+            guestName: input.guestName,
+            guestEmail: input.guestEmail,
+            guestPhone: input.guestPhone,
+            notes: input.notes,
+            tableId: assignedTableId,
+            slotId: input.slotId,
+          },
+          tx,
+        );
+      });
+    } catch (error) {
+      // The availability check above and the insert are not atomic under PostgreSQL's
+      // default Read Committed isolation, so two concurrent requests for the same
+      // table+slot+date can both pass the check. The `bookings_confirmed_table_slot_date_key`
+      // partial unique index (see prisma/migrations) is the actual guard against a real
+      // double-booking; this catches its violation and turns it into the same ConflictError
+      // API consumers already see from the pre-check, instead of leaking a raw 500.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictError('Table was just booked for this slot and date');
+      }
+      throw error;
+    }
   },
 
   async getById(id: string): Promise<Booking> {
@@ -135,7 +148,7 @@ export const BookingService = {
       return BookingRepository.updateStatus(id, 'cancelled');
     }
 
-    if (input.tableId) {
+    if (input.tableId !== undefined) {
       if (input.tableId === booking.tableId) {
         return booking;
       }
@@ -148,7 +161,18 @@ export const BookingService = {
       if (!available) {
         throw new ConflictError('Requested table is not available for this slot and date');
       }
-      return BookingRepository.updateTable(id, input.tableId);
+      try {
+        return await BookingRepository.updateTable(id, input.tableId);
+      } catch (error) {
+        // Same check-then-update TOCTOU shape as BookingService.create: the availability
+        // check above and this update aren't atomic, so a concurrent request can slip in
+        // between them and trip the `bookings_confirmed_table_slot_date_key` partial
+        // unique index. Surface it as the same ConflictError instead of a raw 500.
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ConflictError('Table was just booked for this slot and date');
+        }
+        throw error;
+      }
     }
 
     return booking;
