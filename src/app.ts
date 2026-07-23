@@ -6,7 +6,6 @@ import { slotRouter } from './routes/slot.routes';
 import { bookingRouter } from './routes/booking.routes';
 import { adminBookingRouter } from './routes/adminBooking.routes';
 import { errorHandler } from './middleware/errorHandler';
-import './types/express.d.ts';
 
 export function createApp(): Express {
   const app = express();
