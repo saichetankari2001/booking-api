@@ -61,8 +61,9 @@ export const BookingService = {
     // per spec treats a "YYYY-MM-DD" input as UTC midnight. This is kept as-is (rather
     // than switched to local time) because it's the representation used for persistence
     // and for repository queries elsewhere in this codebase (see
-    // BookingRepository.list's `new Date(filters.date)` and TableRepository's date
-    // filters) — using local time here instead would make a newly created booking's
+    // BookingRepository.list's `new Date(filters.date)` and
+    // TableRepository/SlotRepository's `countFutureConfirmedBookings` UTC-midnight
+    // thresholds) — using local time here instead would make a newly created booking's
     // `date` column fail to match same-date queries made elsewhere on servers running
     // ahead of UTC. The ISO parse is also strict about calendar validity (e.g.
     // "2026-13-45" becomes Invalid Date), so it doubles as our shape/range check.
