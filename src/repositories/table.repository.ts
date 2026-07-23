@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { Table, PrismaClient, Prisma } from '@prisma/client';
+import { todayUtcMidnight } from '../lib/dateUtils';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -25,19 +26,11 @@ export const TableRepository = {
   },
 
   countFutureConfirmedBookings(tableId: number): Promise<number> {
-    // Threshold must be UTC midnight of today's local calendar date, matching how
-    // `Booking.date` is persisted (see BookingService.create's ISO-string Date parse).
-    // `new Date(new Date().toDateString())` produces LOCAL midnight instead, which is a
-    // later UTC instant on servers behind UTC — wrongly excluding same-day bookings.
-    const now = new Date();
-    const todayUtcMidnight = new Date(
-      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
-    );
     return prisma.booking.count({
       where: {
         tableId,
         status: 'confirmed',
-        date: { gte: todayUtcMidnight },
+        date: { gte: todayUtcMidnight() },
       },
     });
   },

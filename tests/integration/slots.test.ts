@@ -29,6 +29,11 @@ describe('Slots', () => {
     expect(res.body[0].label).toBe('Lunch');
   });
 
+  it('rejects admin slot requests without a token', async () => {
+    const res = await request(app).get('/admin/slots');
+    expect(res.status).toBe(401);
+  });
+
   it('admin can create, update, and delete a slot', async () => {
     const token = await getAuthToken(app);
 
