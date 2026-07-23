@@ -1,5 +1,5 @@
-import { Prisma, Booking } from '@prisma/client';
-import { BookingRepository } from '../repositories/booking.repository';
+import { Prisma, Booking, Table } from '@prisma/client';
+import { BookingRepository, BookingListFilters } from '../repositories/booking.repository';
 import { TableRepository } from '../repositories/table.repository';
 import { SlotRepository } from '../repositories/slot.repository';
 import { ValidationError, NotFoundError, ConflictError } from '../errors/AppError';
@@ -107,5 +107,62 @@ export const BookingService = {
         tx,
       );
     });
+  },
+
+  async getById(id: string): Promise<Booking> {
+    const booking = await BookingRepository.findById(id);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${id} not found`);
+    }
+    return booking;
+  },
+
+  async cancel(id: string): Promise<Booking> {
+    const booking = await BookingRepository.findById(id);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${id} not found`);
+    }
+    return BookingRepository.updateStatus(id, 'cancelled');
+  },
+
+  async adminUpdate(id: string, input: { status?: 'cancelled'; tableId?: number }): Promise<Booking> {
+    const booking = await BookingRepository.findById(id);
+    if (!booking) {
+      throw new NotFoundError(`Booking ${id} not found`);
+    }
+
+    if (input.status === 'cancelled') {
+      return BookingRepository.updateStatus(id, 'cancelled');
+    }
+
+    if (input.tableId) {
+      if (input.tableId === booking.tableId) {
+        return booking;
+      }
+      const available = await TableRepository.findAvailableWithSpecificTable(
+        input.tableId,
+        booking.slotId,
+        booking.date,
+        booking.partySize,
+      );
+      if (!available) {
+        throw new ConflictError('Requested table is not available for this slot and date');
+      }
+      return BookingRepository.updateTable(id, input.tableId);
+    }
+
+    return booking;
+  },
+
+  async list(filters: BookingListFilters): Promise<{ bookings: Booking[]; total: number }> {
+    return BookingRepository.list(filters);
+  },
+
+  async availableTables(slotId: number, date: string, partySize: number): Promise<Table[]> {
+    const slot = await SlotRepository.findById(slotId);
+    if (!slot || !slot.isActive) {
+      throw new NotFoundError('Time slot not found or inactive');
+    }
+    return TableRepository.findAvailable(slotId, new Date(date), partySize);
   },
 };

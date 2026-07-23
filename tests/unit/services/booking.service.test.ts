@@ -150,3 +150,116 @@ describe('BookingService.create', () => {
     await expect(BookingService.create(validInput)).rejects.toThrow(NotFoundError);
   });
 });
+
+describe('BookingService.getById', () => {
+  it('returns the booking when found', async () => {
+    mockedBookingRepo.findById.mockResolvedValue({ id: 'uuid-1' } as unknown as Booking);
+    const result = await BookingService.getById('uuid-1');
+    expect(result.id).toBe('uuid-1');
+  });
+
+  it('throws NotFoundError when not found', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(null);
+    await expect(BookingService.getById('missing')).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe('BookingService.cancel', () => {
+  it('sets status to cancelled', async () => {
+    mockedBookingRepo.findById.mockResolvedValue({ id: 'uuid-1', status: 'confirmed' } as unknown as Booking);
+    mockedBookingRepo.updateStatus.mockResolvedValue({ id: 'uuid-1', status: 'cancelled' } as unknown as Booking);
+    const result = await BookingService.cancel('uuid-1');
+    expect(result.status).toBe('cancelled');
+  });
+
+  it('throws NotFoundError when booking does not exist', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(null);
+    await expect(BookingService.cancel('missing')).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe('BookingService.adminUpdate', () => {
+  const existingBooking = {
+    id: 'uuid-1',
+    tableId: 2,
+    slotId: 1,
+    date: new Date(),
+    partySize: 2,
+    status: 'confirmed',
+  } as unknown as Booking;
+
+  it('cancels the booking when status is cancelled', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    mockedBookingRepo.updateStatus.mockResolvedValue({ ...existingBooking, status: 'cancelled' });
+    const result = await BookingService.adminUpdate('uuid-1', { status: 'cancelled' });
+    expect(result.status).toBe('cancelled');
+  });
+
+  it('returns the booking as-is when tableId equals its current table (no-op reassignment)', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    const result = await BookingService.adminUpdate('uuid-1', { tableId: existingBooking.tableId });
+    expect(result).toBe(existingBooking);
+    expect(mockedTableRepo.findAvailableWithSpecificTable).not.toHaveBeenCalled();
+    expect(mockedBookingRepo.updateTable).not.toHaveBeenCalled();
+  });
+
+  it('reassigns the table when tableId is provided and available', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue({
+      id: 7,
+      name: 'Table 7',
+      capacity: 4,
+      description: null,
+      createdAt: new Date(),
+    });
+    mockedBookingRepo.updateTable.mockResolvedValue({ ...existingBooking, tableId: 7 });
+    const result = await BookingService.adminUpdate('uuid-1', { tableId: 7 });
+    expect(result.tableId).toBe(7);
+  });
+
+  it('throws ConflictError when the new table is unavailable', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(ConflictError);
+  });
+
+  it('throws NotFoundError when booking does not exist', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(null);
+    await expect(BookingService.adminUpdate('missing', { status: 'cancelled' })).rejects.toThrow(
+      NotFoundError,
+    );
+  });
+
+  it('returns the booking as-is when neither status nor tableId is provided', async () => {
+    mockedBookingRepo.findById.mockResolvedValue(existingBooking);
+    const result = await BookingService.adminUpdate('uuid-1', {});
+    expect(result).toBe(existingBooking);
+  });
+});
+
+describe('BookingService.list', () => {
+  it('delegates to BookingRepository.list with the given filters', async () => {
+    const filters = { page: 1, pageSize: 10 };
+    const listResult = { bookings: [{ id: 'uuid-1' }] as unknown as Booking[], total: 1 };
+    mockedBookingRepo.list.mockResolvedValue(listResult);
+    const result = await BookingService.list(filters);
+    expect(mockedBookingRepo.list).toHaveBeenCalledWith(filters);
+    expect(result).toBe(listResult);
+  });
+});
+
+describe('BookingService.availableTables', () => {
+  it('throws NotFoundError when slot is inactive', async () => {
+    mockedSlotRepo.findById.mockResolvedValue({ ...activeSlot, isActive: false });
+    await expect(BookingService.availableTables(1, tomorrowStr, 2)).rejects.toThrow(NotFoundError);
+  });
+
+  it('returns available tables for an active slot', async () => {
+    mockedSlotRepo.findById.mockResolvedValue(activeSlot);
+    mockedTableRepo.findAvailable.mockResolvedValue([
+      { id: 2, name: 'Table 2', capacity: 2, description: null, createdAt: new Date() },
+    ]);
+    const result = await BookingService.availableTables(1, tomorrowStr, 2);
+    expect(result).toHaveLength(1);
+  });
+});
