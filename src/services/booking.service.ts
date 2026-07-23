@@ -57,8 +57,28 @@ async function assignBestFitTable(
 
 export const BookingService = {
   async create(input: CreateBookingInput): Promise<Booking> {
+    // `bookingDate` is intentionally parsed via the ISO-string Date constructor, which
+    // per spec treats a "YYYY-MM-DD" input as UTC midnight. This is kept as-is (rather
+    // than switched to local time) because it's the representation used for persistence
+    // and for repository queries elsewhere in this codebase (see
+    // BookingRepository.list's `new Date(filters.date)` and TableRepository's date
+    // filters) — using local time here instead would make a newly created booking's
+    // `date` column fail to match same-date queries made elsewhere on servers running
+    // ahead of UTC. The ISO parse is also strict about calendar validity (e.g.
+    // "2026-13-45" becomes Invalid Date), so it doubles as our shape/range check.
     const bookingDate = new Date(input.date);
-    if (Number.isNaN(bookingDate.getTime()) || bookingDate < startOfToday()) {
+    if (Number.isNaN(bookingDate.getTime())) {
+      throw new ValidationError('date must be a valid, non-past date');
+    }
+
+    // For the "is this date in the past" check, compare against `startOfToday()` using
+    // the SAME time base: startOfToday() is built with the local-time
+    // `Date(year, month, day)` constructor, so we derive a local-time equivalent of the
+    // requested date here too. Comparing local-vs-UTC midnight directly is the bug this
+    // fixes (same-day bookings were rejected on servers behind UTC).
+    const [year, month, day] = input.date.split('-').map(Number);
+    const bookingDateLocal = new Date(year, month - 1, day);
+    if (bookingDateLocal < startOfToday()) {
       throw new ValidationError('date must be a valid, non-past date');
     }
 

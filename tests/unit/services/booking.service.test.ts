@@ -108,6 +108,30 @@ describe('BookingService.create', () => {
     ).rejects.toThrow(ValidationError);
   });
 
+  it('does not reject a same-day booking (regression: UTC vs local midnight comparison)', async () => {
+    // Regression test for the bug where `bookingDate` (parsed as UTC midnight from
+    // "YYYY-MM-DD") was compared against `startOfToday()` (local midnight). On any
+    // server running behind UTC, that made today's date look like it was in the past.
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate(),
+    ).padStart(2, '0')}`;
+
+    mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(true);
+    mockedTableRepo.findAvailable.mockResolvedValue([
+      { id: 2, name: 'Table 2', capacity: 2, description: null, createdAt: new Date() },
+    ]);
+    mockedBookingRepo.create.mockResolvedValue({ id: 'uuid-today', tableId: 2 } as unknown as Booking);
+
+    await expect(BookingService.create({ ...validInput, date: todayStr })).resolves.toEqual(
+      expect.objectContaining({ tableId: 2 }),
+    );
+  });
+
+  it('returns ValidationError for a malformed date string (e.g. invalid month/day)', async () => {
+    await expect(BookingService.create({ ...validInput, date: '2026-13-45' })).rejects.toThrow(ValidationError);
+  });
+
   it('returns ValidationError when partySize exceeds all table capacities', async () => {
     mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(false);
 
