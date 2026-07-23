@@ -22,3 +22,20 @@ export const availableTablesQuerySchema = z.object({
 });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+
+export const adminListBookingsQuerySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  status: z.enum(['confirmed', 'cancelled']).optional(),
+  slotId: z.coerce.number().int().positive().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export const adminUpdateBookingSchema = z
+  .object({
+    status: z.literal('cancelled').optional(),
+    tableId: z.coerce.number().int().positive().optional(),
+  })
+  .refine((data) => data.status !== undefined || data.tableId !== undefined, {
+    message: 'Either status or tableId must be provided',
+  });

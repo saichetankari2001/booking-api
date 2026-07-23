@@ -42,3 +42,40 @@ export const getAvailableTables: RequestHandler = async (req, res, next) => {
     next(err);
   }
 };
+
+export const adminListBookings: RequestHandler = async (req, res, next) => {
+  try {
+    const { date, status, slotId, page, pageSize } = req.query as unknown as {
+      date?: string;
+      status?: 'confirmed' | 'cancelled';
+      slotId?: number;
+      page: number;
+      pageSize: number;
+    };
+    const result = await BookingService.list({ date, status, slotId, page, pageSize });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const adminGetBooking: RequestHandler = async (req, res, next) => {
+  try {
+    const booking = await BookingService.getById((req.params as unknown as { id: string }).id);
+    res.status(200).json(booking);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const adminUpdateBooking: RequestHandler = async (req, res, next) => {
+  try {
+    const booking = await BookingService.adminUpdate(
+      (req.params as unknown as { id: string }).id,
+      req.body as { status?: 'cancelled'; tableId?: number },
+    );
+    res.status(200).json(booking);
+  } catch (err) {
+    next(err);
+  }
+};

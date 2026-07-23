@@ -4,6 +4,7 @@ import { authRouter } from './routes/auth.routes';
 import { tableRouter } from './routes/table.routes';
 import { slotRouter } from './routes/slot.routes';
 import { bookingRouter } from './routes/booking.routes';
+import { adminBookingRouter } from './routes/adminBooking.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 export function createApp(): Express {
@@ -14,6 +15,7 @@ export function createApp(): Express {
   app.use(tableRouter);
   app.use(slotRouter);
   app.use(bookingRouter);
+  app.use(adminBookingRouter);
   app.use(errorHandler);
   return app;
 }
