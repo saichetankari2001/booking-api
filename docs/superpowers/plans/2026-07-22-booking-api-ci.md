@@ -21,9 +21,11 @@
 ## Task 1: Lint Job
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Produces: `ci.yml` with a `lint` job. Tasks 2 and 3 append sibling jobs to this same file.
 
 - [ ] **Step 1: Write `.github/workflows/ci.yml`**
@@ -73,50 +75,52 @@ git commit -m "ci: add lint job"
 ## Task 2: Test Job
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml` (add `test` job)
 
 **Interfaces:**
+
 - Consumes: `npm run test:unit`, `npm run test:integration`, `npx prisma migrate deploy` (from the core API plan).
 - Produces: `test` job, uploads `coverage/` as a build artifact named `coverage-report`.
 
 - [ ] **Step 1: Modify `.github/workflows/ci.yml`** — add this job after `lint`:
 
 ```yaml
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: booking_api_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/booking_api_test
-      JWT_SECRET: ci-test-secret
-      NODE_ENV: test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npx prisma migrate deploy
-      - run: npm run test:unit -- --coverage
-      - run: npm run test:integration
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
+test:
+  runs-on: ubuntu-latest
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: booking_api_test
+      ports:
+        - 5432:5432
+      options: >-
+        --health-cmd "pg_isready -U postgres"
+        --health-interval 5s
+        --health-timeout 5s
+        --health-retries 5
+  env:
+    DATABASE_URL: postgresql://postgres:postgres@localhost:5432/booking_api_test
+    JWT_SECRET: ci-test-secret
+    NODE_ENV: test
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - run: npm ci
+    - run: npx prisma generate
+    - run: npx prisma migrate deploy
+    - run: npm run test:unit -- --coverage
+    - run: npm run test:integration
+    - uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
 ```
 
 - [ ] **Step 2: Validate YAML syntax**
@@ -141,65 +145,67 @@ git commit -m "ci: add test job with postgres service container and coverage upl
 ## Task 3: Build Job
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml` (add `build` job)
 
 **Interfaces:**
+
 - Consumes: `npm run build`, `Dockerfile` (from the core API plan).
 - Produces: `build` job, `needs: [lint, test]`, builds the Docker image and verifies `/health` returns `{"status":"ok","db":"ok"}`.
 
 - [ ] **Step 1: Modify `.github/workflows/ci.yml`** — add this job after `test`:
 
 ```yaml
-  build:
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: booking_api_build
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: npx prisma generate
-      - run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/booking_api_build
-      - uses: docker/setup-buildx-action@v3
-      - run: docker build -t booking-api:ci -f Dockerfile --load .
-      - name: Start container and verify /health
-        run: |
-          docker run -d --name booking-api-ci --network host \
-            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/booking_api_build \
-            -e JWT_SECRET=ci-build-check-secret \
-            -e PORT=3000 \
-            booking-api:ci
-          for i in $(seq 1 10); do
-            if curl -sf http://localhost:3000/health | grep -q '"db":"ok"'; then
-              echo "Container healthy"
-              docker rm -f booking-api-ci
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Container did not become healthy"
-          docker logs booking-api-ci
-          docker rm -f booking-api-ci
-          exit 1
+build:
+  runs-on: ubuntu-latest
+  needs: [lint, test]
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: booking_api_build
+      ports:
+        - 5432:5432
+      options: >-
+        --health-cmd "pg_isready -U postgres"
+        --health-interval 5s
+        --health-timeout 5s
+        --health-retries 5
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build
+    - run: npx prisma generate
+    - run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/booking_api_build
+    - uses: docker/setup-buildx-action@v3
+    - run: docker build -t booking-api:ci -f Dockerfile --load .
+    - name: Start container and verify /health
+      run: |
+        docker run -d --name booking-api-ci --network host \
+          -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/booking_api_build \
+          -e JWT_SECRET=ci-build-check-secret \
+          -e PORT=3000 \
+          booking-api:ci
+        for i in $(seq 1 10); do
+          if curl -sf http://localhost:3000/health | grep -q '"db":"ok"'; then
+            echo "Container healthy"
+            docker rm -f booking-api-ci
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Container did not become healthy"
+        docker logs booking-api-ci
+        docker rm -f booking-api-ci
+        exit 1
 ```
 
 - [ ] **Step 2: Validate YAML syntax**
@@ -210,6 +216,7 @@ Expected: `valid yaml` printed.
 - [ ] **Step 3: Run the equivalent steps locally**
 
 Run:
+
 ```bash
 npm run build
 docker build -t booking-api:ci -f Dockerfile .
@@ -223,6 +230,7 @@ sleep 3
 curl -s http://localhost:3000/health
 docker rm -f booking-api-ci
 ```
+
 Expected: `curl` output is `{"status":"ok","db":"ok"}`.
 
 - [ ] **Step 4: Commit**

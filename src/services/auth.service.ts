@@ -2,7 +2,11 @@ import bcrypt from 'bcrypt';
 import { createHash } from 'crypto';
 import { AdminRepository } from '../repositories/admin.repository';
 import { RefreshTokenRepository } from '../repositories/refreshToken.repository';
-import { signAccessToken, generateRefreshTokenValue, verifyRefreshTokenSignature } from '../lib/jwt';
+import {
+  signAccessToken,
+  generateRefreshTokenValue,
+  verifyRefreshTokenSignature,
+} from '../lib/jwt';
 import { UnauthorizedError } from '../errors/AppError';
 import { env } from '../config/env';
 

@@ -24,6 +24,7 @@
 ## Task 1: Project Scaffolding & Tooling
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `jest.config.js`
@@ -33,6 +34,7 @@
 - Test: `tests/unit/sanity.test.ts`
 
 **Interfaces:**
+
 - Produces: npm scripts (`build`, `dev`, `lint`, `format`, `test`, `test:unit`, `test:integration`, `prisma:generate`, `prisma:migrate`, `prisma:migrate:deploy`) that every later task relies on.
 
 - [ ] **Step 1: Write `package.json`**
@@ -200,6 +202,7 @@ git commit -m "chore: project scaffolding and tooling"
 ## Task 2: Env Config Validation
 
 **Files:**
+
 - Create: `src/config/env.ts`
 - Create: `.env.example`
 - Create: `tests/unit/setup.ts`
@@ -207,6 +210,7 @@ git commit -m "chore: project scaffolding and tooling"
 - Test: `tests/unit/config/env.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `parseEnv(source: NodeJS.ProcessEnv): Env` (pure, throws `EnvValidationError`), `env: Env` (module-level singleton used by every later task that needs config), `EnvValidationError` class. `Env` type has fields: `NODE_ENV`, `PORT`, `DATABASE_URL`, `JWT_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN_DAYS`.
 
@@ -342,6 +346,7 @@ git commit -m "feat: env config validation with zod"
 ## Task 3: Docker Compose, Dockerfile, Prisma Schema & Migration
 
 **Files:**
+
 - Create: `docker-compose.yml`
 - Create: `docker-compose.test.yml`
 - Create: `Dockerfile`
@@ -350,6 +355,7 @@ git commit -m "feat: env config validation with zod"
 - Create: `.env.test.example`
 
 **Interfaces:**
+
 - Produces: Prisma models `Table`, `TimeSlot`, `Booking` (enum `BookingStatus`), `Admin`, `RefreshToken`; `prisma: PrismaClient` singleton import from `src/lib/prisma.ts`, used by every repository.
 
 - [ ] **Step 1: Write `docker-compose.yml`**
@@ -569,10 +575,12 @@ git commit -m "feat: postgres via docker-compose, prisma schema and initial migr
 ## Task 4: Error Classes
 
 **Files:**
+
 - Create: `src/errors/AppError.ts`
 - Test: `tests/unit/errors/AppError.test.ts`
 
 **Interfaces:**
+
 - Produces: `AppError` (base, has `statusCode: number`), `ValidationError` (422), `NotFoundError` (404), `ConflictError` (409), `UnauthorizedError` (401). Every service in later tasks throws these; `errorHandler` (Task 5) maps them to HTTP responses.
 
 - [ ] **Step 1: Write the failing test**
@@ -662,6 +670,7 @@ git commit -m "feat: typed AppError hierarchy"
 ## Task 5: Express App Factory, Error Handler, Health Endpoint, Integration Test Harness
 
 **Files:**
+
 - Create: `src/middleware/errorHandler.ts`
 - Create: `src/routes/health.routes.ts`
 - Create: `src/app.ts`
@@ -671,6 +680,7 @@ git commit -m "feat: typed AppError hierarchy"
 - Test: `tests/integration/health.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AppError` (Task 4), `prisma` (Task 3), `env` (Task 2).
 - Produces: `createApp(): Express` (used by every integration test and `server.ts`), `errorHandler` (mounted last, maps `ZodError`/`AppError`/unknown to responses).
 
@@ -810,10 +820,12 @@ git commit -m "feat: express app factory, error handler, health endpoint, integr
 ## Task 6: JWT Helper Library
 
 **Files:**
+
 - Create: `src/lib/jwt.ts`
 - Test: `tests/unit/lib/jwt.test.ts`
 
 **Interfaces:**
+
 - Consumes: `env` (Task 2).
 - Produces: `AccessTokenPayload { adminId: number; email: string }`, `signAccessToken(payload): string`, `verifyAccessToken(token): AccessTokenPayload`, `RefreshTokenPayload { type: 'refresh'; jti: string }`, `generateRefreshTokenValue(): string`, `verifyRefreshTokenSignature(token): RefreshTokenPayload`. Used by `AuthService` (Task 8) and `authenticate` middleware (Task 9).
 
@@ -911,10 +923,12 @@ git commit -m "feat: jwt access/refresh token helpers"
 ## Task 7: Admin & RefreshToken Repositories
 
 **Files:**
+
 - Create: `src/repositories/admin.repository.ts`
 - Create: `src/repositories/refreshToken.repository.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` (Task 3).
 - Produces: `AdminRepository.{findByEmail, findById, create}`, `RefreshTokenRepository.{create, findByTokenHash, revoke}`. Consumed by `AuthService` (Task 8). No dedicated unit tests — per Global Constraints, unit tests cover the service layer only; repositories are exercised indirectly via integration tests.
 
@@ -973,10 +987,12 @@ git commit -m "feat: admin and refresh token repositories"
 ## Task 8: Auth Service (login, refresh, logout)
 
 **Files:**
+
 - Create: `src/services/auth.service.ts`
 - Test: `tests/unit/services/auth.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AdminRepository`, `RefreshTokenRepository` (Task 7), `signAccessToken`, `generateRefreshTokenValue`, `verifyRefreshTokenSignature` (Task 6), `UnauthorizedError` (Task 4), `env` (Task 2).
 - Produces: `AuthService.login(email, password): Promise<{accessToken, refreshToken}>`, `AuthService.refresh(refreshToken): Promise<{accessToken}>`, `AuthService.logout(refreshToken): Promise<void>`. Consumed by `auth.controller.ts` (Task 10).
 
@@ -997,7 +1013,12 @@ const mockedAdminRepo = AdminRepository as jest.Mocked<typeof AdminRepository>;
 const mockedRefreshRepo = RefreshTokenRepository as jest.Mocked<typeof RefreshTokenRepository>;
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
-const admin = { id: 1, email: 'admin@restaurant.com', passwordHash: 'hashed', createdAt: new Date() };
+const admin = {
+  id: 1,
+  email: 'admin@restaurant.com',
+  passwordHash: 'hashed',
+  createdAt: new Date(),
+};
 
 describe('AuthService.login', () => {
   it('returns access and refresh tokens for valid credentials', async () => {
@@ -1027,7 +1048,9 @@ describe('AuthService.login', () => {
   it('throws UnauthorizedError when password does not match', async () => {
     mockedAdminRepo.findByEmail.mockResolvedValue(admin);
     mockedBcrypt.compare.mockResolvedValue(false as never);
-    await expect(AuthService.login('admin@restaurant.com', 'wrong')).rejects.toThrow(UnauthorizedError);
+    await expect(AuthService.login('admin@restaurant.com', 'wrong')).rejects.toThrow(
+      UnauthorizedError,
+    );
   });
 });
 
@@ -1100,7 +1123,11 @@ import bcrypt from 'bcrypt';
 import { createHash } from 'crypto';
 import { AdminRepository } from '../repositories/admin.repository';
 import { RefreshTokenRepository } from '../repositories/refreshToken.repository';
-import { signAccessToken, generateRefreshTokenValue, verifyRefreshTokenSignature } from '../lib/jwt';
+import {
+  signAccessToken,
+  generateRefreshTokenValue,
+  verifyRefreshTokenSignature,
+} from '../lib/jwt';
 import { UnauthorizedError } from '../errors/AppError';
 import { env } from '../config/env';
 
@@ -1194,11 +1221,13 @@ git commit -m "feat: auth service (login, refresh, logout)"
 ## Task 9: Authenticate Middleware
 
 **Files:**
+
 - Create: `src/types/express.d.ts`
 - Create: `src/middleware/authenticate.ts`
 - Test: `tests/unit/middleware/authenticate.test.ts`
 
 **Interfaces:**
+
 - Consumes: `verifyAccessToken` (Task 6), `UnauthorizedError` (Task 4).
 - Produces: `authenticate: RequestHandler` that sets `req.admin: AccessTokenPayload`. Used by every `/admin/*` route (Tasks 10, 13, 16, 21).
 
@@ -1302,6 +1331,7 @@ git commit -m "feat: jwt authenticate middleware"
 ## Task 10: Auth Routes, Controllers, Schemas, Validation Middleware + Integration Tests
 
 **Files:**
+
 - Create: `src/middleware/validate.ts`
 - Create: `src/schemas/auth.schema.ts`
 - Create: `src/controllers/auth.controller.ts`
@@ -1312,6 +1342,7 @@ git commit -m "feat: jwt authenticate middleware"
 - Test: `tests/integration/auth.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AuthService` (Task 8), `errorHandler`'s `ZodError` branch (Task 5).
 - Produces: `validateBody(schema)`, `validateQuery(schema)` middleware (reused by every later route task), `authRouter` mounted at `/auth/login`, `/auth/refresh`, `/auth/logout`. `resetDb()` and `seedAdmin()` test helpers reused by every later integration test.
 
@@ -1547,9 +1578,11 @@ git commit -m "feat: auth routes with validation and integration tests"
 ## Task 11: Table Repository
 
 **Files:**
+
 - Create: `src/repositories/table.repository.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` (Task 3).
 - Produces: `TableRepository.{findAll, findById, create, update, delete, countFutureConfirmedBookings, existsWithCapacityAtLeast, findAvailable, findAvailableWithSpecificTable}`. All methods that participate in a transaction accept an optional `db: PrismaClient | Prisma.TransactionClient` last parameter (defaults to the singleton). Consumed by `TableService` (Task 12) and `BookingService` (Tasks 18–19).
 
@@ -1574,7 +1607,10 @@ export const TableRepository = {
     return prisma.table.create({ data });
   },
 
-  update(id: number, data: { name?: string; capacity?: number; description?: string }): Promise<Table> {
+  update(
+    id: number,
+    data: { name?: string; capacity?: number; description?: string },
+  ): Promise<Table> {
     return prisma.table.update({ where: { id }, data });
   },
 
@@ -1597,7 +1633,12 @@ export const TableRepository = {
     return count > 0;
   },
 
-  findAvailable(slotId: number, date: Date, partySize: number, db: DbClient = prisma): Promise<Table[]> {
+  findAvailable(
+    slotId: number,
+    date: Date,
+    partySize: number,
+    db: DbClient = prisma,
+  ): Promise<Table[]> {
     return db.table.findMany({
       where: {
         capacity: { gte: partySize },
@@ -1642,10 +1683,12 @@ git commit -m "feat: table repository with availability queries"
 ## Task 12: Table Service
 
 **Files:**
+
 - Create: `src/services/table.service.ts`
 - Test: `tests/unit/services/table.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `TableRepository` (Task 11), `NotFoundError`, `ConflictError` (Task 4).
 - Produces: `TableService.{listAll, create, update, remove}`. Consumed by `table.controller.ts` (Task 13).
 
@@ -1718,7 +1761,10 @@ export const TableService = {
     return TableRepository.create(input);
   },
 
-  async update(id: number, input: { name?: string; capacity?: number; description?: string }): Promise<Table> {
+  async update(
+    id: number,
+    input: { name?: string; capacity?: number; description?: string },
+  ): Promise<Table> {
     const existing = await TableRepository.findById(id);
     if (!existing) {
       throw new NotFoundError(`Table ${id} not found`);
@@ -1759,6 +1805,7 @@ git commit -m "feat: table service with CRUD and delete guard"
 ## Task 13: Table Routes, Controllers, Schemas + Integration Tests
 
 **Files:**
+
 - Create: `src/schemas/table.schema.ts`
 - Create: `src/controllers/table.controller.ts`
 - Create: `src/routes/table.routes.ts`
@@ -1767,6 +1814,7 @@ git commit -m "feat: table service with CRUD and delete guard"
 - Test: `tests/integration/admin-tables.test.ts`
 
 **Interfaces:**
+
 - Consumes: `TableService` (Task 12), `authenticate` (Task 9), `validateBody`/`validateParams` (Task 10).
 - Produces: `tableRouter` at `/admin/tables`, `/admin/tables/:id`. `getAuthToken(app)` test helper reused by every later admin integration test.
 
@@ -1861,7 +1909,12 @@ tableRouter.patch(
   validateBody(updateTableSchema),
   updateTable,
 );
-tableRouter.delete('/admin/tables/:id', authenticate, validateParams(tableIdParamSchema), deleteTable);
+tableRouter.delete(
+  '/admin/tables/:id',
+  authenticate,
+  validateParams(tableIdParamSchema),
+  deleteTable,
+);
 ```
 
 - [ ] **Step 4: Modify `src/app.ts`** — add the import and `app.use(tableRouter)` before `app.use(errorHandler)`.
@@ -1980,9 +2033,11 @@ git commit -m "feat: admin table routes with integration tests"
 ## Task 14: Slot Repository
 
 **Files:**
+
 - Create: `src/repositories/slot.repository.ts`
 
 **Interfaces:**
+
 - Produces: `SlotRepository.{findAllActive, findAll, findById, create, update, delete, countFutureConfirmedBookings}`. Consumed by `SlotService` (Task 15) and `BookingService` (Task 18).
 
 - [ ] **Step 1: Write `src/repositories/slot.repository.ts`**
@@ -2053,10 +2108,12 @@ git commit -m "feat: time slot repository"
 ## Task 15: Slot Service
 
 **Files:**
+
 - Create: `src/services/slot.service.ts`
 - Test: `tests/unit/services/slot.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SlotRepository` (Task 14), `NotFoundError`, `ConflictError` (Task 4).
 - Produces: `SlotService.{listActive, listAll, create, update, remove}`. Consumed by `slot.controller.ts` (Task 16) and `BookingService.create` (Task 18, via `SlotRepository.findById` directly — `SlotService` itself is only consumed by the slot controller).
 
@@ -2189,6 +2246,7 @@ git commit -m "feat: time slot service with CRUD and delete guard"
 ## Task 16: Slot Routes, Controllers, Schemas (public + admin) + Integration Tests
 
 **Files:**
+
 - Create: `src/schemas/slot.schema.ts`
 - Create: `src/controllers/slot.controller.ts`
 - Create: `src/routes/slot.routes.ts`
@@ -2196,6 +2254,7 @@ git commit -m "feat: time slot service with CRUD and delete guard"
 - Test: `tests/integration/slots.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SlotService` (Task 15), `authenticate` (Task 9).
 - Produces: `slotRouter` at `/slots` (public), `/admin/slots`, `/admin/slots/:id`.
 
@@ -2213,7 +2272,10 @@ export const createSlotSchema = z.object({
 
 export const updateSlotSchema = z.object({
   label: z.string().min(1).optional(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  startTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   durationMinutes: z.coerce.number().int().positive().optional(),
   isActive: z.boolean().optional(),
 });
@@ -2288,7 +2350,13 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate';
 import { validateBody, validateParams } from '../middleware/validate';
 import { createSlotSchema, updateSlotSchema, slotIdParamSchema } from '../schemas/slot.schema';
-import { listSlots, adminListSlots, createSlot, updateSlot, deleteSlot } from '../controllers/slot.controller';
+import {
+  listSlots,
+  adminListSlots,
+  createSlot,
+  updateSlot,
+  deleteSlot,
+} from '../controllers/slot.controller';
 
 export const slotRouter = Router();
 
@@ -2383,9 +2451,11 @@ git commit -m "feat: public and admin time slot routes with integration tests"
 ## Task 17: Booking Repository
 
 **Files:**
+
 - Create: `src/repositories/booking.repository.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` (Task 3).
 - Produces: `BookingListFilters { date?: string; status?: 'confirmed'|'cancelled'; slotId?: number; page: number; pageSize: number }`, `CreateBookingData { date: Date; partySize: number; guestName: string; guestEmail: string; guestPhone?: string; notes?: string; tableId: number; slotId: number }`, `BookingRepository.{findById, findConflicting, create, updateStatus, updateTable, list, runInTransaction}`. `runInTransaction` is the **only** place `prisma.$transaction` is called anywhere in the codebase — services get transactional atomicity by calling it, never by importing `prisma` themselves. Consumed by `BookingService` (Tasks 18–19).
 
@@ -2421,7 +2491,12 @@ export const BookingRepository = {
     return db.booking.findUnique({ where: { id } });
   },
 
-  findConflicting(tableId: number, slotId: number, date: Date, db: DbClient = prisma): Promise<Booking | null> {
+  findConflicting(
+    tableId: number,
+    slotId: number,
+    date: Date,
+    db: DbClient = prisma,
+  ): Promise<Booking | null> {
     return db.booking.findFirst({ where: { tableId, slotId, date, status: 'confirmed' } });
   },
 
@@ -2429,7 +2504,11 @@ export const BookingRepository = {
     return db.booking.create({ data });
   },
 
-  updateStatus(id: string, status: 'confirmed' | 'cancelled', db: DbClient = prisma): Promise<Booking> {
+  updateStatus(
+    id: string,
+    status: 'confirmed' | 'cancelled',
+    db: DbClient = prisma,
+  ): Promise<Booking> {
     return db.booking.update({ where: { id }, data: { status } });
   },
 
@@ -2479,10 +2558,12 @@ git commit -m "feat: booking repository with transaction support"
 ## Task 18: Booking Service — `create()`
 
 **Files:**
+
 - Create: `src/services/booking.service.ts`
 - Test: `tests/unit/services/booking.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BookingRepository`, `TableRepository`, `SlotRepository` (Tasks 17, 11, 14), `ValidationError`, `NotFoundError`, `ConflictError` (Task 4).
 - Produces: `CreateBookingInput { date: string; slotId: number; partySize: number; guestName: string; guestEmail: string; guestPhone?: string; notes?: string; tableId?: number }`, `BookingService.create(input): Promise<Booking>`. This is the object literal that Task 19 adds more methods to — do not create a second `BookingService` export.
 
@@ -2573,14 +2654,18 @@ describe('BookingService.create', () => {
       createdAt: new Date(),
     });
 
-    await expect(BookingService.create({ ...validInput, tableId: 5 })).rejects.toThrow(ConflictError);
+    await expect(BookingService.create({ ...validInput, tableId: 5 })).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   it('returns NotFoundError when the chosen tableId does not exist', async () => {
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
     mockedTableRepo.findById.mockResolvedValue(null);
 
-    await expect(BookingService.create({ ...validInput, tableId: 999 })).rejects.toThrow(NotFoundError);
+    await expect(BookingService.create({ ...validInput, tableId: 999 })).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it('returns ConflictError when no tables are available for auto-assign', async () => {
@@ -2602,7 +2687,9 @@ describe('BookingService.create', () => {
   it('returns ValidationError when partySize exceeds all table capacities', async () => {
     mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(false);
 
-    await expect(BookingService.create({ ...validInput, partySize: 50 })).rejects.toThrow(ValidationError);
+    await expect(BookingService.create({ ...validInput, partySize: 50 })).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it('returns NotFoundError when slotId does not exist', async () => {
@@ -2656,7 +2743,13 @@ async function assignSpecificTable(
   partySize: number,
   tx: Prisma.TransactionClient,
 ): Promise<number> {
-  const table = await TableRepository.findAvailableWithSpecificTable(tableId, slotId, date, partySize, tx);
+  const table = await TableRepository.findAvailableWithSpecificTable(
+    tableId,
+    slotId,
+    date,
+    partySize,
+    tx,
+  );
   if (table) return table.id;
 
   const exists = await TableRepository.findById(tableId, tx);
@@ -2736,10 +2829,12 @@ git commit -m "feat: booking service create() with auto-assign and conflict dete
 ## Task 19: Booking Service — `getById`, `cancel`, `adminUpdate`, `list`, `availableTables`
 
 **Files:**
+
 - Modify: `src/services/booking.service.ts` (add methods to the existing `BookingService` object)
 - Modify: `tests/unit/services/booking.service.test.ts` (add test suites)
 
 **Interfaces:**
+
 - Consumes: same as Task 18, plus `Table` type from `@prisma/client`.
 - Produces: `BookingService.{getById(id), cancel(id), adminUpdate(id, {status?, tableId?}), list(filters: BookingListFilters), availableTables(slotId, date, partySize)}`. Consumed by `booking.controller.ts` (Task 20) and admin booking controller (Task 21).
 
@@ -2809,7 +2904,9 @@ describe('BookingService.adminUpdate', () => {
   it('throws ConflictError when the new table is unavailable', async () => {
     mockedBookingRepo.findById.mockResolvedValue(existingBooking);
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
-    await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(ConflictError);
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   it('throws NotFoundError when booking does not exist', async () => {
@@ -2930,6 +3027,7 @@ git commit -m "feat: booking service getById/cancel/adminUpdate/list/availableTa
 ## Task 20: Public Booking & Availability Routes, Controllers, Schemas + Integration Tests
 
 **Files:**
+
 - Create: `src/schemas/booking.schema.ts`
 - Create: `src/controllers/booking.controller.ts`
 - Create: `src/routes/booking.routes.ts`
@@ -2937,6 +3035,7 @@ git commit -m "feat: booking service getById/cancel/adminUpdate/list/availableTa
 - Test: `tests/integration/bookings.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BookingService` (Tasks 18–19).
 - Produces: `bookingRouter` at `GET /tables/available`, `POST /bookings`, `GET /bookings/:id`, `DELETE /bookings/:id`. `createBooking`, `getBooking`, `cancelBooking`, `getAvailableTables` controller functions — `adminListBookings`/`adminGetBooking`/`adminUpdateBooking` are added to this same `booking.controller.ts` file in Task 21, not duplicated.
 
@@ -3023,12 +3122,25 @@ export const getAvailableTables: RequestHandler = async (req, res, next) => {
 ```ts
 import { Router } from 'express';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate';
-import { createBookingSchema, bookingIdParamSchema, availableTablesQuerySchema } from '../schemas/booking.schema';
-import { createBooking, getBooking, cancelBooking, getAvailableTables } from '../controllers/booking.controller';
+import {
+  createBookingSchema,
+  bookingIdParamSchema,
+  availableTablesQuerySchema,
+} from '../schemas/booking.schema';
+import {
+  createBooking,
+  getBooking,
+  cancelBooking,
+  getAvailableTables,
+} from '../controllers/booking.controller';
 
 export const bookingRouter = Router();
 
-bookingRouter.get('/tables/available', validateQuery(availableTablesQuerySchema), getAvailableTables);
+bookingRouter.get(
+  '/tables/available',
+  validateQuery(availableTablesQuerySchema),
+  getAvailableTables,
+);
 bookingRouter.post('/bookings', validateBody(createBookingSchema), createBooking);
 bookingRouter.get('/bookings/:id', validateParams(bookingIdParamSchema), getBooking);
 bookingRouter.delete('/bookings/:id', validateParams(bookingIdParamSchema), cancelBooking);
@@ -3159,6 +3271,7 @@ git commit -m "feat: public booking and availability routes with integration tes
 ## Task 21: Admin Booking Routes, Controllers, Schemas + Integration Tests
 
 **Files:**
+
 - Modify: `src/schemas/booking.schema.ts` (add admin schemas)
 - Modify: `src/controllers/booking.controller.ts` (add admin controller functions)
 - Create: `src/routes/adminBooking.routes.ts`
@@ -3166,6 +3279,7 @@ git commit -m "feat: public booking and availability routes with integration tes
 - Test: `tests/integration/admin-bookings.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BookingService.{list, getById, adminUpdate}` (Task 19), `authenticate` (Task 9).
 - Produces: `adminBookingRouter` at `GET /admin/bookings`, `GET /admin/bookings/:id`, `PATCH /admin/bookings/:id`.
 
@@ -3173,7 +3287,10 @@ git commit -m "feat: public booking and availability routes with integration tes
 
 ```ts
 export const adminListBookingsQuerySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   status: z.enum(['confirmed', 'cancelled']).optional(),
   slotId: z.coerce.number().int().positive().optional(),
   page: z.coerce.number().int().positive().default(1),
@@ -3242,7 +3359,11 @@ import {
   adminListBookingsQuerySchema,
   adminUpdateBookingSchema,
 } from '../schemas/booking.schema';
-import { adminListBookings, adminGetBooking, adminUpdateBooking } from '../controllers/booking.controller';
+import {
+  adminListBookings,
+  adminGetBooking,
+  adminUpdateBooking,
+} from '../controllers/booking.controller';
 
 export const adminBookingRouter = Router();
 
@@ -3348,10 +3469,12 @@ git commit -m "feat: admin booking routes with integration tests"
 ## Task 22: Final Wiring Check
 
 **Files:**
+
 - Modify: `src/app.ts` (verify final mount order)
 - Test: `tests/integration/routes-smoke.test.ts`
 
 **Interfaces:**
+
 - Consumes: every router from Tasks 5, 10, 13, 16, 20, 21.
 - Produces: nothing new — this task only verifies the wiring is complete and correctly ordered.
 
@@ -3443,9 +3566,11 @@ git commit -m "test: route table smoke test confirming full wiring"
 ## Task 23: Local Dev Seed Script
 
 **Files:**
+
 - Create: `prisma/seed.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` client directly (seed scripts are a Prisma-blessed exception to the "only repositories touch prisma" rule, since they run standalone outside the app's request lifecycle).
 - Produces: `npx prisma db seed` populates one admin (`admin@restaurant.com` / `admin123`), 3 time slots, 5 tables — for manual local testing via `docker compose up`.
 

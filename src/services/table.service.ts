@@ -11,7 +11,10 @@ export const TableService = {
     return TableRepository.create(input);
   },
 
-  async update(id: number, input: { name?: string; capacity?: number; description?: string }): Promise<Table> {
+  async update(
+    id: number,
+    input: { name?: string; capacity?: number; description?: string },
+  ): Promise<Table> {
     const existing = await TableRepository.findById(id);
     if (!existing) {
       throw new NotFoundError(`Table ${id} not found`);

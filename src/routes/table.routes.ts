@@ -15,4 +15,9 @@ tableRouter.patch(
   validateBody(updateTableSchema),
   updateTable,
 );
-tableRouter.delete('/admin/tables/:id', authenticate, validateParams(tableIdParamSchema), deleteTable);
+tableRouter.delete(
+  '/admin/tables/:id',
+  authenticate,
+  validateParams(tableIdParamSchema),
+  deleteTable,
+);

@@ -17,7 +17,10 @@ export const TableRepository = {
     return prisma.table.create({ data });
   },
 
-  update(id: number, data: { name?: string; capacity?: number; description?: string }): Promise<Table> {
+  update(
+    id: number,
+    data: { name?: string; capacity?: number; description?: string },
+  ): Promise<Table> {
     return prisma.table.update({ where: { id }, data });
   },
 
@@ -40,7 +43,12 @@ export const TableRepository = {
     return count > 0;
   },
 
-  findAvailable(slotId: number, date: Date, partySize: number, db: DbClient = prisma): Promise<Table[]> {
+  findAvailable(
+    slotId: number,
+    date: Date,
+    partySize: number,
+    db: DbClient = prisma,
+  ): Promise<Table[]> {
     return db.table.findMany({
       where: {
         capacity: { gte: partySize },

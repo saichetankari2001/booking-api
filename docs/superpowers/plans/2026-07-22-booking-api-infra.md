@@ -22,12 +22,14 @@
 ## Task 1: Terraform Provider, Backend, and Variables
 
 **Files:**
+
 - Create: `infra/terraform/versions.tf`
 - Create: `infra/terraform/variables.tf`
 - Create: `infra/terraform/terraform.tfvars.example`
 - Modify: `.gitignore` (add Terraform state/vars ignores)
 
 **Interfaces:**
+
 - Produces: `var.tenancy_ocid`, `var.user_ocid`, `var.fingerprint`, `var.private_key_path`, `var.region`, `var.compartment_ocid`, `var.ssh_public_key`, `var.app_image`, `var.jwt_secret`, `var.postgres_password` — consumed by every later `.tf` file in this plan.
 
 - [ ] **Step 1: Write `infra/terraform/versions.tf`**
@@ -149,9 +151,11 @@ git commit -m "infra: terraform provider config and variables"
 ## Task 2: Networking (VCN, Subnet, Security List)
 
 **Files:**
+
 - Create: `infra/terraform/network.tf`
 
 **Interfaces:**
+
 - Consumes: `var.compartment_ocid` (Task 1).
 - Produces: `oci_core_subnet.booking_api` (referenced by Task 4's compute instance).
 
@@ -241,9 +245,11 @@ git commit -m "infra: vcn, subnet, and security list allowing ssh and app port"
 ## Task 3: OCI Registry Repository
 
 **Files:**
+
 - Create: `infra/terraform/registry.tf`
 
 **Interfaces:**
+
 - Consumes: `var.compartment_ocid` (Task 1).
 - Produces: `oci_artifacts_container_repository.booking_api`, `data.oci_objectstorage_namespace.ns` (the OCIR namespace, needed to compute the full image path — reused by Task 4's cloud-init and Task 6's outputs).
 
@@ -278,10 +284,12 @@ git commit -m "infra: oci registry repository for the app image"
 ## Task 4: Compute Instance (Postgres + App via Docker, cloud-init)
 
 **Files:**
+
 - Create: `infra/terraform/compute.tf`
 - Create: `infra/terraform/cloud-init.yaml.tpl`
 
 **Interfaces:**
+
 - Consumes: `oci_core_subnet.booking_api` (Task 2), `data.oci_objectstorage_namespace.ns` (Task 3), `var.ssh_public_key`, `var.jwt_secret`, `var.postgres_password`, `var.region`, `var.compartment_ocid`, `var.tenancy_ocid` (Task 1).
 - Produces: `oci_core_instance.booking_api` — its `public_ip` is consumed by Task 6's `outputs.tf` and by the `deploy.yml` workflow (Task 7) as the SSH target.
 
@@ -403,9 +411,11 @@ git commit -m "infra: a1.flex compute instance running postgres+app via docker c
 ## Task 5: Outputs
 
 **Files:**
+
 - Create: `infra/terraform/outputs.tf`
 
 **Interfaces:**
+
 - Consumes: `oci_core_instance.booking_api.public_ip` (Task 4), `data.oci_objectstorage_namespace.ns` and `oci_artifacts_container_repository.booking_api` (Task 3).
 - Produces: `terraform output instance_public_ip`, `terraform output registry_repository` — the values you'll copy into GitHub Actions secrets/variables in Task 7.
 
@@ -464,9 +474,11 @@ Expected: `instance_public_ip` and `registry_repository` printed — you'll need
 ## Task 7: GitHub Actions `deploy` Job
 
 **Files:**
+
 - Create: `.github/workflows/deploy.yml`
 
 **Interfaces:**
+
 - Consumes: `Dockerfile` (core API plan), `instance_public_ip` and `registry_repository` (Task 6's `terraform output`).
 - Produces: `deploy.yml`, runs only on push to `main`, builds + pushes the image to OCIR, then SSHes into the instance to pull and restart.
 

@@ -6,7 +6,11 @@ import {
   adminListBookingsQuerySchema,
   adminUpdateBookingSchema,
 } from '../schemas/booking.schema';
-import { adminListBookings, adminGetBooking, adminUpdateBooking } from '../controllers/booking.controller';
+import {
+  adminListBookings,
+  adminGetBooking,
+  adminUpdateBooking,
+} from '../controllers/booking.controller';
 
 export const adminBookingRouter = Router();
 

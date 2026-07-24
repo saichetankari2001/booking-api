@@ -48,6 +48,7 @@ No `Customer` entity — guests are captured inline on `Booking`. Repeat custome
 Grouped by actor. All `/admin/*` routes require `Authorization: Bearer <accessToken>`.
 
 **Auth (admin only)**
+
 ```
 POST   /auth/login          Body: { email, password } → { accessToken, refreshToken }
 POST   /auth/refresh        Body: { refreshToken }     → { accessToken }
@@ -55,12 +56,14 @@ POST   /auth/logout         Body: { refreshToken }     → 204
 ```
 
 **Public — slots & availability**
+
 ```
 GET    /slots                              → list of active time slots
 GET    /tables/available                   ?slotId=&date=&partySize= → available tables
 ```
 
 **Public — bookings (guest, no auth)**
+
 ```
 POST   /bookings            Body: { date, slotId, partySize, guestName, guestEmail, guestPhone?, notes?, tableId? }
                             → 201 booking (with assigned table)
@@ -70,6 +73,7 @@ DELETE /bookings/:id        → cancel (guest self-cancel by ID)
 ```
 
 **Admin — booking management**
+
 ```
 GET    /admin/bookings      ?date=&status=&slotId= → paginated list
 GET    /admin/bookings/:id  → full booking detail
@@ -77,6 +81,7 @@ PATCH  /admin/bookings/:id  Body: { status: 'cancelled' } | { tableId } → upda
 ```
 
 **Admin — table management**
+
 ```
 GET    /admin/tables        → all tables
 POST   /admin/tables        Body: { name, capacity, description? }
@@ -85,6 +90,7 @@ DELETE /admin/tables/:id    → 204 (blocked if table has future confirmed booki
 ```
 
 **Admin — slot management**
+
 ```
 GET    /admin/slots         → all slots (including inactive)
 POST   /admin/slots         Body: { label, startTime, durationMinutes, isActive? }
@@ -93,6 +99,7 @@ DELETE /admin/slots/:id     → 204 (blocked if slot has future confirmed bookin
 ```
 
 **System**
+
 ```
 GET    /health              → { status: 'ok', db: 'ok' }
 ```
@@ -117,6 +124,7 @@ HTTP Request
 **`controllers/`** — Extracts validated input from `req`, calls exactly one service method, sends the response. A controller function is typically 5–8 lines.
 
 **`services/`** — All business rules live here:
+
 - `BookingService.create()` — validates date is future, slot is active, runs conflict check, auto-assigns or validates chosen table, creates booking in a single Prisma transaction
 - Overlap query: existing booking on same table+slot+date where `status = confirmed`
 - Auto-assign: find tables where `capacity >= partySize`, exclude those with confirmed bookings on that slot+date, pick smallest (best-fit)
@@ -125,6 +133,7 @@ HTTP Request
 **`repositories/`** — One file per entity. Only Prisma calls, e.g. `BookingRepository.findConflicting(tableId, slotId, date)` returns raw data — no filtering, no business decisions.
 
 **Table assignment:** `tableId` on `POST /bookings` is optional.
+
 - Omitted → service auto-assigns best-fit table (smallest available table that fits party size)
 - Provided → service validates that specific table is available and fits the party size, then assigns it
 
@@ -145,6 +154,7 @@ Two layers, clearly separated.
 Every service method tested in isolation; repositories mocked with `jest.fn()`. Fast (no I/O), and forces business logic to live only in the service layer — if it can't be unit tested without a DB, it's in the wrong layer.
 
 Key `BookingService` cases:
+
 - Creates booking and auto-assigns smallest fitting table when `tableId` omitted
 - Creates booking with specific `tableId` when provided and available
 - Returns `ConflictError` when chosen table already booked at that slot+date
@@ -159,6 +169,7 @@ Key `BookingService` cases:
 Run against a real Postgres instance (Docker, separate test DB). Each suite runs migrations fresh, seeds minimal data, tears down after. Tests call the actual Express app via Supertest — no mocking.
 
 Key flows:
+
 - `POST /bookings` end-to-end: creates booking, returns 201 with table assigned
 - `POST /bookings` conflict: second booking same slot+date+table returns 409
 - `POST /auth/login` → `GET /admin/bookings` with valid token → 200
@@ -183,6 +194,7 @@ Stage 2 (`production`): copies only `dist/` and prod `node_modules` from builder
 **GitHub Actions CI pipeline**
 
 Three jobs, all must pass before merge:
+
 1. `lint` — ESLint + Prettier check
 2. `test` — spins up a Postgres service container, runs migrations, runs unit + integration tests, uploads coverage report
 3. `build` — compiles TypeScript, builds Docker image, confirms it starts healthy

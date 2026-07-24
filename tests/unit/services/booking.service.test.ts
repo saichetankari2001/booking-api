@@ -82,14 +82,18 @@ describe('BookingService.create', () => {
       createdAt: new Date(),
     });
 
-    await expect(BookingService.create({ ...validInput, tableId: 5 })).rejects.toThrow(ConflictError);
+    await expect(BookingService.create({ ...validInput, tableId: 5 })).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   it('returns NotFoundError when the chosen tableId does not exist', async () => {
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
     mockedTableRepo.findById.mockResolvedValue(null);
 
-    await expect(BookingService.create({ ...validInput, tableId: 999 })).rejects.toThrow(NotFoundError);
+    await expect(BookingService.create({ ...validInput, tableId: 999 })).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it('returns ConflictError when no tables are available for auto-assign', async () => {
@@ -121,7 +125,10 @@ describe('BookingService.create', () => {
     mockedTableRepo.findAvailable.mockResolvedValue([
       { id: 2, name: 'Table 2', capacity: 2, description: null, createdAt: new Date() },
     ]);
-    mockedBookingRepo.create.mockResolvedValue({ id: 'uuid-today', tableId: 2 } as unknown as Booking);
+    mockedBookingRepo.create.mockResolvedValue({
+      id: 'uuid-today',
+      tableId: 2,
+    } as unknown as Booking);
 
     await expect(BookingService.create({ ...validInput, date: todayStr })).resolves.toEqual(
       expect.objectContaining({ tableId: 2 }),
@@ -129,13 +136,17 @@ describe('BookingService.create', () => {
   });
 
   it('returns ValidationError for a malformed date string (e.g. invalid month/day)', async () => {
-    await expect(BookingService.create({ ...validInput, date: '2026-13-45' })).rejects.toThrow(ValidationError);
+    await expect(BookingService.create({ ...validInput, date: '2026-13-45' })).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it('returns ValidationError when partySize exceeds all table capacities', async () => {
     mockedTableRepo.existsWithCapacityAtLeast.mockResolvedValue(false);
 
-    await expect(BookingService.create({ ...validInput, partySize: 50 })).rejects.toThrow(ValidationError);
+    await expect(BookingService.create({ ...validInput, partySize: 50 })).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it('returns NotFoundError when slotId does not exist', async () => {
@@ -196,8 +207,14 @@ describe('BookingService.getById', () => {
 
 describe('BookingService.cancel', () => {
   it('sets status to cancelled', async () => {
-    mockedBookingRepo.findById.mockResolvedValue({ id: 'uuid-1', status: 'confirmed' } as unknown as Booking);
-    mockedBookingRepo.updateStatus.mockResolvedValue({ id: 'uuid-1', status: 'cancelled' } as unknown as Booking);
+    mockedBookingRepo.findById.mockResolvedValue({
+      id: 'uuid-1',
+      status: 'confirmed',
+    } as unknown as Booking);
+    mockedBookingRepo.updateStatus.mockResolvedValue({
+      id: 'uuid-1',
+      status: 'cancelled',
+    } as unknown as Booking);
     const result = await BookingService.cancel('uuid-1');
     expect(result.status).toBe('cancelled');
   });
@@ -250,7 +267,9 @@ describe('BookingService.adminUpdate', () => {
   it('throws ConflictError when the new table is unavailable', async () => {
     mockedBookingRepo.findById.mockResolvedValue(existingBooking);
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
-    await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(ConflictError);
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 9 })).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   it('returns ConflictError (not the raw Prisma error) when BookingRepository.updateTable hits the unique index race', async () => {
@@ -272,7 +291,9 @@ describe('BookingService.adminUpdate', () => {
     });
     mockedBookingRepo.updateTable.mockRejectedValue(p2002Error);
 
-    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow(ConflictError);
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   it('re-throws non-P2002 errors from BookingRepository.updateTable unchanged', async () => {
@@ -287,7 +308,9 @@ describe('BookingService.adminUpdate', () => {
     const otherError = new Error('connection lost');
     mockedBookingRepo.updateTable.mockRejectedValue(otherError);
 
-    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow('connection lost');
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 7 })).rejects.toThrow(
+      'connection lost',
+    );
   });
 
   it('treats tableId: 0 as a real reassignment request rather than a silent no-op', async () => {
@@ -299,8 +322,15 @@ describe('BookingService.adminUpdate', () => {
     mockedBookingRepo.findById.mockResolvedValue(bookingOnTableFive);
     mockedTableRepo.findAvailableWithSpecificTable.mockResolvedValue(null);
 
-    await expect(BookingService.adminUpdate('uuid-1', { tableId: 0 })).rejects.toThrow(ConflictError);
-    expect(mockedTableRepo.findAvailableWithSpecificTable).toHaveBeenCalledWith(0, 1, expect.any(Date), 2);
+    await expect(BookingService.adminUpdate('uuid-1', { tableId: 0 })).rejects.toThrow(
+      ConflictError,
+    );
+    expect(mockedTableRepo.findAvailableWithSpecificTable).toHaveBeenCalledWith(
+      0,
+      1,
+      expect.any(Date),
+      2,
+    );
   });
 
   it('throws NotFoundError when booking does not exist', async () => {

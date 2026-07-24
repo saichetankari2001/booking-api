@@ -27,7 +27,12 @@ export const BookingRepository = {
     return db.booking.findUnique({ where: { id } });
   },
 
-  findConflicting(tableId: number, slotId: number, date: Date, db: DbClient = prisma): Promise<Booking | null> {
+  findConflicting(
+    tableId: number,
+    slotId: number,
+    date: Date,
+    db: DbClient = prisma,
+  ): Promise<Booking | null> {
     return db.booking.findFirst({ where: { tableId, slotId, date, status: 'confirmed' } });
   },
 
@@ -35,7 +40,11 @@ export const BookingRepository = {
     return db.booking.create({ data });
   },
 
-  updateStatus(id: string, status: 'confirmed' | 'cancelled', db: DbClient = prisma): Promise<Booking> {
+  updateStatus(
+    id: string,
+    status: 'confirmed' | 'cancelled',
+    db: DbClient = prisma,
+  ): Promise<Booking> {
     return db.booking.update({ where: { id }, data: { status } });
   },
 

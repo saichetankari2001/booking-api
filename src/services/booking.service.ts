@@ -27,7 +27,13 @@ async function assignSpecificTable(
   partySize: number,
   tx: Prisma.TransactionClient,
 ): Promise<number> {
-  const table = await TableRepository.findAvailableWithSpecificTable(tableId, slotId, date, partySize, tx);
+  const table = await TableRepository.findAvailableWithSpecificTable(
+    tableId,
+    slotId,
+    date,
+    partySize,
+    tx,
+  );
   if (table) return table.id;
 
   const exists = await TableRepository.findById(tableId, tx);
@@ -138,7 +144,10 @@ export const BookingService = {
     return BookingRepository.updateStatus(id, 'cancelled');
   },
 
-  async adminUpdate(id: string, input: { status?: 'cancelled'; tableId?: number }): Promise<Booking> {
+  async adminUpdate(
+    id: string,
+    input: { status?: 'cancelled'; tableId?: number },
+  ): Promise<Booking> {
     const booking = await BookingRepository.findById(id);
     if (!booking) {
       throw new NotFoundError(`Booking ${id} not found`);

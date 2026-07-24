@@ -9,7 +9,10 @@ export const createSlotSchema = z.object({
 
 export const updateSlotSchema = z.object({
   label: z.string().min(1).optional(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  startTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   durationMinutes: z.coerce.number().int().positive().optional(),
   isActive: z.boolean().optional(),
 });

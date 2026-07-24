@@ -12,7 +12,12 @@ const mockedAdminRepo = AdminRepository as jest.Mocked<typeof AdminRepository>;
 const mockedRefreshRepo = RefreshTokenRepository as jest.Mocked<typeof RefreshTokenRepository>;
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
-const admin = { id: 1, email: 'admin@restaurant.com', passwordHash: 'hashed', createdAt: new Date() };
+const admin = {
+  id: 1,
+  email: 'admin@restaurant.com',
+  passwordHash: 'hashed',
+  createdAt: new Date(),
+};
 
 describe('AuthService.login', () => {
   it('returns access and refresh tokens for valid credentials', async () => {
@@ -42,7 +47,9 @@ describe('AuthService.login', () => {
   it('throws UnauthorizedError when password does not match', async () => {
     mockedAdminRepo.findByEmail.mockResolvedValue(admin);
     mockedBcrypt.compare.mockResolvedValue(false as never);
-    await expect(AuthService.login('admin@restaurant.com', 'wrong')).rejects.toThrow(UnauthorizedError);
+    await expect(AuthService.login('admin@restaurant.com', 'wrong')).rejects.toThrow(
+      UnauthorizedError,
+    );
   });
 });
 
