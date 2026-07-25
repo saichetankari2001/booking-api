@@ -100,7 +100,7 @@
     "eslint": "^9.9.0",
     "@eslint/js": "^9.9.0",
     "typescript-eslint": "^8.1.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "prettier": "^3.3.3"
   }
