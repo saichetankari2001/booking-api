@@ -6,6 +6,7 @@ import BookingConfirmation from './pages/BookingConfirmation';
 import AdminLogin from './pages/AdminLogin';
 import AdminBookings from './pages/AdminBookings';
 import AdminTables from './pages/AdminTables';
+import AdminSlots from './pages/AdminSlots';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { RequireAdmin } from './components/RequireAdmin';
 import { AdminNav } from './components/AdminNav';
@@ -32,7 +33,7 @@ export function AppRoutes() {
         <Route index element={<Navigate to="bookings" replace />} />
         <Route path="bookings" element={<AdminBookings />} />
         <Route path="tables" element={<AdminTables />} />
-        {/* Task 15 adds "slots" */}
+        <Route path="slots" element={<AdminSlots />} />
       </Route>
     </Routes>
   );
