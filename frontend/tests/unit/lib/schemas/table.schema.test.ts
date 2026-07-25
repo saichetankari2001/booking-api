@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createTableFormSchema, updateTableFormSchema } from '../../../../src/lib/schemas/table.schema';
+import {
+  createTableFormSchema,
+  updateTableFormSchema,
+} from '../../../../src/lib/schemas/table.schema';
 
 describe('table form schemas', () => {
   it('accepts a valid new table', () => {

@@ -18,7 +18,9 @@ const sampleTable = {
 
 describe('adminTables api', () => {
   it('fetchAdminTables returns the list of tables', async () => {
-    server.use(http.get('http://localhost:3000/admin/tables', () => HttpResponse.json([sampleTable])));
+    server.use(
+      http.get('http://localhost:3000/admin/tables', () => HttpResponse.json([sampleTable])),
+    );
     expect(await fetchAdminTables()).toEqual([sampleTable]);
   });
 
@@ -28,7 +30,13 @@ describe('adminTables api', () => {
         const body = await req.json();
         expect(body).toEqual({ name: 'Table 2', capacity: 4 });
         return HttpResponse.json(
-          { id: 2, name: 'Table 2', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 2,
+            name: 'Table 2',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
           { status: 201 },
         );
       }),
@@ -51,7 +59,10 @@ describe('adminTables api', () => {
 
   it('deleteAdminTable sends a DELETE', async () => {
     server.use(
-      http.delete('http://localhost:3000/admin/tables/1', () => new HttpResponse(null, { status: 204 })),
+      http.delete(
+        'http://localhost:3000/admin/tables/1',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
     );
     await expect(deleteAdminTable(1)).resolves.toBeUndefined();
   });

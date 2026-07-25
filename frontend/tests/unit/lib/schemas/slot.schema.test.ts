@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createSlotFormSchema, updateSlotFormSchema } from '../../../../src/lib/schemas/slot.schema';
+import {
+  createSlotFormSchema,
+  updateSlotFormSchema,
+} from '../../../../src/lib/schemas/slot.schema';
 
 describe('slot form schemas', () => {
   it('accepts a valid new slot', () => {

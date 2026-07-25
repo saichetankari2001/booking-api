@@ -24,7 +24,13 @@ const booking = {
 
 const tablesHandler = http.get('http://localhost:3000/admin/tables', () =>
   HttpResponse.json([
-    { id: 5, name: 'Table 5', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+    {
+      id: 5,
+      name: 'Table 5',
+      capacity: 4,
+      description: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
   ]),
 );
 const slotsHandler = http.get('http://localhost:3000/admin/slots', () =>

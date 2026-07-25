@@ -12,14 +12,26 @@ describe('fetchAvailableTables', () => {
         expect(url.searchParams.get('date')).toBe('2026-08-01');
         expect(url.searchParams.get('partySize')).toBe('2');
         return HttpResponse.json([
-          { id: 3, name: 'Table 3', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 3,
+            name: 'Table 3',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
         ]);
       }),
     );
 
     const tables = await fetchAvailableTables({ slotId: 1, date: '2026-08-01', partySize: 2 });
     expect(tables).toEqual([
-      { id: 3, name: 'Table 3', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+      {
+        id: 3,
+        name: 'Table 3',
+        capacity: 4,
+        description: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
     ]);
   });
 });

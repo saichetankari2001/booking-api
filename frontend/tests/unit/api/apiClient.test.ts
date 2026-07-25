@@ -88,7 +88,9 @@ describe('apiClient.request', () => {
       jsonResponse({ error: 'UnauthorizedError', message: 'expired' }, 401),
     );
 
-    await expect(request('/admin/tables', { authenticated: true })).rejects.toBeInstanceOf(ApiError);
+    await expect(request('/admin/tables', { authenticated: true })).rejects.toBeInstanceOf(
+      ApiError,
+    );
     expect(onAuthFailure).toHaveBeenCalledTimes(1);
   });
 });

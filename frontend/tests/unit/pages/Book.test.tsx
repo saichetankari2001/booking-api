@@ -104,7 +104,10 @@ describe('Book', () => {
     server.use(
       http.get('http://localhost:3000/tables/available', () => HttpResponse.json([availableTable])),
       http.post('http://localhost:3000/bookings', () =>
-        HttpResponse.json({ error: 'ConflictError', message: 'Table was just booked' }, { status: 409 }),
+        HttpResponse.json(
+          { error: 'ConflictError', message: 'Table was just booked' },
+          { status: 409 },
+        ),
       ),
     );
 

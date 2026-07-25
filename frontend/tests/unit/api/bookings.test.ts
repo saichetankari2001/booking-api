@@ -21,7 +21,9 @@ const sampleBooking = {
 describe('bookings api', () => {
   it('createBooking posts the payload and returns the created booking', async () => {
     server.use(
-      http.post('http://localhost:3000/bookings', () => HttpResponse.json(sampleBooking, { status: 201 })),
+      http.post('http://localhost:3000/bookings', () =>
+        HttpResponse.json(sampleBooking, { status: 201 }),
+      ),
     );
     const result = await createBooking({
       date: '2026-08-01',
@@ -44,7 +46,10 @@ describe('bookings api', () => {
 
   it('cancelBooking sends a DELETE and resolves with no content', async () => {
     server.use(
-      http.delete('http://localhost:3000/bookings/booking-1', () => new HttpResponse(null, { status: 204 })),
+      http.delete(
+        'http://localhost:3000/bookings/booking-1',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
     );
     await expect(cancelBooking('booking-1')).resolves.toBeUndefined();
   });

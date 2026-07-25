@@ -79,7 +79,11 @@ export default function AdminTables() {
           <label htmlFor="new-name" className="block text-sm font-medium mb-1">
             Name
           </label>
-          <input id="new-name" className="rounded border border-border px-3 py-2" {...register('name')} />
+          <input
+            id="new-name"
+            className="rounded border border-border px-3 py-2"
+            {...register('name')}
+          />
           {errors.name && (
             <p role="alert" className="text-accent text-sm mt-1">
               {errors.name.message}
@@ -162,7 +166,9 @@ export default function AdminTables() {
                     <input
                       aria-label="Edit description"
                       value={editValues.description}
-                      onChange={(e) => setEditValues((v) => ({ ...v, description: e.target.value }))}
+                      onChange={(e) =>
+                        setEditValues((v) => ({ ...v, description: e.target.value }))
+                      }
                       className="rounded border border-border px-2 py-1"
                     />
                   </td>
