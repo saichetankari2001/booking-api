@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Home from './pages/Home';
 import Book from './pages/Book';
 import BookingConfirmation from './pages/BookingConfirmation';
 import AdminLogin from './pages/AdminLogin';
+import AdminBookings from './pages/AdminBookings';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { RequireAdmin } from './components/RequireAdmin';
 import { AdminNav } from './components/AdminNav';
@@ -27,7 +28,9 @@ export function AppRoutes() {
       <Route path="/bookings/:id" element={<BookingConfirmation />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout />}>
-        {/* Tasks 13-15 add nested "bookings" / "tables" / "slots" routes here */}
+        <Route index element={<Navigate to="bookings" replace />} />
+        <Route path="bookings" element={<AdminBookings />} />
+        {/* Task 14 adds "tables", Task 15 adds "slots" */}
       </Route>
     </Routes>
   );
