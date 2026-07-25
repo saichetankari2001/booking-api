@@ -21,7 +21,7 @@
 - Backend response shapes are exactly what's defined in `src/schemas/*.ts`, `src/controllers/*.ts`, and Prisma models — verified against the running source in this plan, not assumed. In particular: `Booking` responses are the flat Prisma row (`id, date, status, partySize, guestName, guestEmail, guestPhone, notes, tableId, slotId, createdAt, updatedAt`) — **no nested `table`/`slot` objects**. There is no public "get table by id" or "list all tables" endpoint — only `GET /tables/available` (requires `slotId`+`date`+`partySize`) and the authenticated `GET /admin/tables`. Any guest-facing page that needs a table's name must either already have it from an available-tables response in the current flow, or fall back to showing `Table #{tableId}`.
 - Error responses: Zod validation failures are `422 { error: 'ValidationError', fields: [{ path, message }] }`; typed `AppError`s are `{statusCode} { error: <ErrorName>, message }`; unhandled errors are `500 { error: 'InternalServerError', message }`.
 - Testing: Vitest + React Testing Library for components, MSW for mocking the API in tests. Tests live in `frontend/tests/` (mirrors this repo's existing `tests/unit` / `tests/integration` split for the backend), not colocated with source.
-- CI: frontend steps are added to the *existing* `.github/workflows/ci.yml` jobs (`lint`, `test`, `build`) — no new jobs.
+- CI: frontend steps are added to the _existing_ `.github/workflows/ci.yml` jobs (`lint`, `test`, `build`) — no new jobs.
 - **Deliberate deviations from the design spec's illustrative folder tree (Section 3):** the spec sketches `apiClient.ts` under `lib/` and shows `api/*.ts` files as owning "fetch calls + TanStack Query hooks" together. This plan instead puts `apiClient.ts` in `api/` (it's an API concern, not a general-purpose lib helper) and splits TanStack Query hooks into a parallel `hooks/` directory, one file per resource (`useSlots.ts`, `useBookings.ts`, `useAdminTables.ts`, etc.), keeping each `api/*.ts` file as plain fetch functions only. This keeps fetch logic independently testable without a React render, and hook files small and single-purpose. Functionally equivalent, purely a file-organization call — every consumer listed in this plan imports from the paths given here, not the spec's sketch. The spec's `lib/dateUtils.ts` is omitted: no task in this plan ends up needing date formatting/parsing beyond native `<input type="date">` values and raw `YYYY-MM-DD` strings passed straight through to the API, so there's nothing for it to contain (YAGNI) — add it if a real need shows up during implementation.
 - **Hero photography (spec Section 2):** no photo asset exists yet, so Task 7 ships the text-only hero treatment the spec names as the graceful fallback. Dropping in a real photo later (e.g. a `background-image` on the existing hero container) needs no architecture change and is out of scope for this plan.
 
@@ -462,7 +462,8 @@ export function Button({ variant = 'primary', className, ...props }: ButtonProps
       className={cn(
         'rounded px-4 py-2 text-sm font-medium font-sans transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary' && 'bg-accent text-background hover:bg-accent/90',
-        variant === 'secondary' && 'border border-accent text-accent bg-transparent hover:bg-accent/10',
+        variant === 'secondary' &&
+          'border border-accent text-accent bg-transparent hover:bg-accent/10',
         className,
       )}
       {...props}
@@ -727,7 +728,9 @@ describe('apiClient.request', () => {
       jsonResponse({ error: 'UnauthorizedError', message: 'expired' }, 401),
     );
 
-    await expect(request('/admin/tables', { authenticated: true })).rejects.toBeInstanceOf(ApiError);
+    await expect(request('/admin/tables', { authenticated: true })).rejects.toBeInstanceOf(
+      ApiError,
+    );
     expect(onAuthFailure).toHaveBeenCalledTimes(1);
   });
 });
@@ -949,7 +952,10 @@ describe('guestBookingFormSchema', () => {
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { createTableFormSchema, updateTableFormSchema } from '../../../../src/lib/schemas/table.schema';
+import {
+  createTableFormSchema,
+  updateTableFormSchema,
+} from '../../../../src/lib/schemas/table.schema';
 
 describe('table form schemas', () => {
   it('accepts a valid new table', () => {
@@ -972,7 +978,10 @@ describe('table form schemas', () => {
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { createSlotFormSchema, updateSlotFormSchema } from '../../../../src/lib/schemas/slot.schema';
+import {
+  createSlotFormSchema,
+  updateSlotFormSchema,
+} from '../../../../src/lib/schemas/slot.schema';
 
 describe('slot form schemas', () => {
   it('accepts a valid new slot', () => {
@@ -1220,14 +1229,26 @@ describe('fetchAvailableTables', () => {
         expect(url.searchParams.get('date')).toBe('2026-08-01');
         expect(url.searchParams.get('partySize')).toBe('2');
         return HttpResponse.json([
-          { id: 3, name: 'Table 3', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 3,
+            name: 'Table 3',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
         ]);
       }),
     );
 
     const tables = await fetchAvailableTables({ slotId: 1, date: '2026-08-01', partySize: 2 });
     expect(tables).toEqual([
-      { id: 3, name: 'Table 3', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+      {
+        id: 3,
+        name: 'Table 3',
+        capacity: 4,
+        description: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
     ]);
   });
 });
@@ -1570,7 +1591,9 @@ const sampleBooking = {
 describe('bookings api', () => {
   it('createBooking posts the payload and returns the created booking', async () => {
     server.use(
-      http.post('http://localhost:3000/bookings', () => HttpResponse.json(sampleBooking, { status: 201 })),
+      http.post('http://localhost:3000/bookings', () =>
+        HttpResponse.json(sampleBooking, { status: 201 }),
+      ),
     );
     const result = await createBooking({
       date: '2026-08-01',
@@ -1593,7 +1616,10 @@ describe('bookings api', () => {
 
   it('cancelBooking sends a DELETE and resolves with no content', async () => {
     server.use(
-      http.delete('http://localhost:3000/bookings/booking-1', () => new HttpResponse(null, { status: 204 })),
+      http.delete(
+        'http://localhost:3000/bookings/booking-1',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
     );
     await expect(cancelBooking('booking-1')).resolves.toBeUndefined();
   });
@@ -1802,7 +1828,10 @@ describe('Book', () => {
     server.use(
       http.get('http://localhost:3000/tables/available', () => HttpResponse.json([availableTable])),
       http.post('http://localhost:3000/bookings', () =>
-        HttpResponse.json({ error: 'ConflictError', message: 'Table was just booked' }, { status: 409 }),
+        HttpResponse.json(
+          { error: 'ConflictError', message: 'Table was just booked' },
+          { status: 409 },
+        ),
       ),
     );
 
@@ -2407,7 +2436,13 @@ describe('guest booking flow', () => {
     server.use(
       http.get('http://localhost:3000/tables/available', () =>
         HttpResponse.json([
-          { id: 5, name: 'Table 5', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 5,
+            name: 'Table 5',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
         ]),
       ),
       http.post('http://localhost:3000/bookings', async ({ request }) => {
@@ -2536,7 +2571,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
-import { AdminAuthProvider, useAdminAuth, REFRESH_TOKEN_KEY } from '../../../src/context/AdminAuthContext';
+import {
+  AdminAuthProvider,
+  useAdminAuth,
+  REFRESH_TOKEN_KEY,
+} from '../../../src/context/AdminAuthContext';
 import { request } from '../../../src/api/apiClient';
 
 function AuthProbe() {
@@ -3414,7 +3453,13 @@ const booking = {
 
 const tablesHandler = http.get('http://localhost:3000/admin/tables', () =>
   HttpResponse.json([
-    { id: 5, name: 'Table 5', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+    {
+      id: 5,
+      name: 'Table 5',
+      capacity: 4,
+      description: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
   ]),
 );
 const slotsHandler = http.get('http://localhost:3000/admin/slots', () =>
@@ -3759,7 +3804,13 @@ describe('admin cancel booking flow', () => {
       ),
       http.get('http://localhost:3000/admin/tables', () =>
         HttpResponse.json([
-          { id: 5, name: 'Table 5', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 5,
+            name: 'Table 5',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
         ]),
       ),
       http.get('http://localhost:3000/admin/slots', () =>
@@ -3853,7 +3904,9 @@ const sampleTable = {
 
 describe('adminTables api', () => {
   it('fetchAdminTables returns the list of tables', async () => {
-    server.use(http.get('http://localhost:3000/admin/tables', () => HttpResponse.json([sampleTable])));
+    server.use(
+      http.get('http://localhost:3000/admin/tables', () => HttpResponse.json([sampleTable])),
+    );
     expect(await fetchAdminTables()).toEqual([sampleTable]);
   });
 
@@ -3863,7 +3916,13 @@ describe('adminTables api', () => {
         const body = await req.json();
         expect(body).toEqual({ name: 'Table 2', capacity: 4 });
         return HttpResponse.json(
-          { id: 2, name: 'Table 2', capacity: 4, description: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          {
+            id: 2,
+            name: 'Table 2',
+            capacity: 4,
+            description: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
           { status: 201 },
         );
       }),
@@ -3886,7 +3945,10 @@ describe('adminTables api', () => {
 
   it('deleteAdminTable sends a DELETE', async () => {
     server.use(
-      http.delete('http://localhost:3000/admin/tables/1', () => new HttpResponse(null, { status: 204 })),
+      http.delete(
+        'http://localhost:3000/admin/tables/1',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
     );
     await expect(deleteAdminTable(1)).resolves.toBeUndefined();
   });
@@ -4170,7 +4232,11 @@ export default function AdminTables() {
           <label htmlFor="new-name" className="block text-sm font-medium mb-1">
             Name
           </label>
-          <input id="new-name" className="rounded border border-border px-3 py-2" {...register('name')} />
+          <input
+            id="new-name"
+            className="rounded border border-border px-3 py-2"
+            {...register('name')}
+          />
           {errors.name && (
             <p role="alert" className="text-accent text-sm mt-1">
               {errors.name.message}
@@ -4253,7 +4319,9 @@ export default function AdminTables() {
                     <input
                       aria-label="Edit description"
                       value={editValues.description}
-                      onChange={(e) => setEditValues((v) => ({ ...v, description: e.target.value }))}
+                      onChange={(e) =>
+                        setEditValues((v) => ({ ...v, description: e.target.value }))
+                      }
                       className="rounded border border-border px-2 py-1"
                     />
                   </td>
@@ -4371,7 +4439,9 @@ const sampleSlot = {
 
 describe('adminSlots api', () => {
   it('fetchAdminSlots returns the list of slots', async () => {
-    server.use(http.get('http://localhost:3000/admin/slots', () => HttpResponse.json([sampleSlot])));
+    server.use(
+      http.get('http://localhost:3000/admin/slots', () => HttpResponse.json([sampleSlot])),
+    );
     expect(await fetchAdminSlots()).toEqual([sampleSlot]);
   });
 
@@ -4415,7 +4485,10 @@ describe('adminSlots api', () => {
 
   it('deleteAdminSlot sends a DELETE', async () => {
     server.use(
-      http.delete('http://localhost:3000/admin/slots/1', () => new HttpResponse(null, { status: 204 })),
+      http.delete(
+        'http://localhost:3000/admin/slots/1',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
     );
     await expect(deleteAdminSlot(1)).resolves.toBeUndefined();
   });
@@ -4621,12 +4694,7 @@ Expected: FAIL — cannot find module `../../../src/pages/AdminSlots`.
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  useAdminSlots,
-  useCreateSlot,
-  useUpdateSlot,
-  useDeleteSlot,
-} from '../hooks/useAdminSlots';
+import { useAdminSlots, useCreateSlot, useUpdateSlot, useDeleteSlot } from '../hooks/useAdminSlots';
 import { createSlotFormSchema, CreateSlotFormInput } from '../lib/schemas/slot.schema';
 import { Button } from '../components/Button';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -4706,7 +4774,11 @@ export default function AdminSlots() {
           <label htmlFor="new-label" className="block text-sm font-medium mb-1">
             Label
           </label>
-          <input id="new-label" className="rounded border border-border px-3 py-2" {...register('label')} />
+          <input
+            id="new-label"
+            className="rounded border border-border px-3 py-2"
+            {...register('label')}
+          />
           {errors.label && (
             <p role="alert" className="text-accent text-sm mt-1">
               {errors.label.message}
