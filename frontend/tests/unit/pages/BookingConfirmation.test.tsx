@@ -43,6 +43,7 @@ describe('BookingConfirmation', () => {
     renderConfirmation('booking-1');
 
     expect(await screen.findByText("You're booked!")).toBeInTheDocument();
+    expect(screen.getByText('August 1, 2026')).toBeInTheDocument();
     expect(screen.getByText('Lunch 12:00')).toBeInTheDocument();
     expect(screen.getByText('Table #5')).toBeInTheDocument();
   });

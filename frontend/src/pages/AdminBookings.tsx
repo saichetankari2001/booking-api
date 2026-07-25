@@ -5,6 +5,7 @@ import { useAdminSlots } from '../hooks/useAdminSlots';
 import { Button } from '../components/Button';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { BookingStatus } from '../api/types';
+import { formatDate } from '../lib/dateUtils';
 
 const PAGE_SIZE = 20;
 
@@ -97,7 +98,7 @@ export default function AdminBookings() {
             {data.bookings.map((booking) => (
               <tr key={booking.id} className="border-b border-border">
                 <td className="py-2">{booking.guestName}</td>
-                <td className="py-2">{booking.date}</td>
+                <td className="py-2">{formatDate(booking.date)}</td>
                 <td className="py-2">{slotLabel(booking.slotId)}</td>
                 <td className="py-2">{tableName(booking.tableId)}</td>
                 <td className="py-2">{booking.partySize}</td>

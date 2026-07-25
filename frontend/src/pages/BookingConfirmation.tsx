@@ -4,6 +4,7 @@ import { useBooking, useCancelBooking } from '../hooks/useBookings';
 import { useSlots } from '../hooks/useSlots';
 import { Button } from '../components/Button';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { formatDate } from '../lib/dateUtils';
 
 export default function BookingConfirmation() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,7 @@ export default function BookingConfirmation() {
       <dl className="space-y-2 mb-8">
         <div>
           <dt className="text-sm text-text/70">Date</dt>
-          <dd>{booking.date}</dd>
+          <dd>{formatDate(booking.date)}</dd>
         </div>
         <div>
           <dt className="text-sm text-text/70">Time</dt>

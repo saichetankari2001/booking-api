@@ -69,6 +69,7 @@ describe('AdminBookings', () => {
     renderPage();
 
     expect(await screen.findByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText('August 1, 2026')).toBeInTheDocument();
     expect(screen.getByText('Table 5')).toBeInTheDocument();
     expect(screen.getByText('Lunch 12:00')).toBeInTheDocument();
   });
