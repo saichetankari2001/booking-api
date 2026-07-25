@@ -23,6 +23,8 @@ export default function AdminSlots() {
   });
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const {
     register,
@@ -42,6 +44,7 @@ export default function AdminSlots() {
   }
 
   function saveEdit(id: number) {
+    setEditError(null);
     updateSlot.mutate(
       {
         id,
@@ -52,13 +55,23 @@ export default function AdminSlots() {
           isActive: editValues.isActive,
         },
       },
-      { onSuccess: () => setEditingId(null) },
+      {
+        onSuccess: () => setEditingId(null),
+        onError: (err) => {
+          setEditError(err instanceof ApiError ? err.message : 'Could not save slot.');
+        },
+      },
     );
   }
 
   async function onCreate(values: CreateSlotFormInput) {
-    await createSlot.mutateAsync(values);
-    reset();
+    try {
+      await createSlot.mutateAsync(values);
+      setCreateError(null);
+      reset();
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : 'Could not create slot.');
+    }
   }
 
   function confirmDelete() {
@@ -127,6 +140,12 @@ export default function AdminSlots() {
         <Button type="submit">Add slot</Button>
       </form>
 
+      {createError && (
+        <p role="alert" className="text-accent mb-4">
+          {createError}
+        </p>
+      )}
+
       {isLoading && <p>Loading slots…</p>}
       {isError && (
         <p role="alert" className="text-accent">
@@ -136,6 +155,11 @@ export default function AdminSlots() {
       {deleteError && (
         <p role="alert" className="text-accent mb-4">
           {deleteError}
+        </p>
+      )}
+      {editError && (
+        <p role="alert" className="text-accent mb-4">
+          {editError}
         </p>
       )}
 

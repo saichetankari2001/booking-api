@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
-import {
-  fetchAdminBookings,
-  cancelAdminBooking,
-  reassignAdminBooking,
-} from '../../../src/api/adminBookings';
+import { fetchAdminBookings, cancelAdminBooking } from '../../../src/api/adminBookings';
 
 const sampleBooking = {
   id: 'booking-1',
@@ -53,17 +49,5 @@ describe('adminBookings api', () => {
     );
     const result = await cancelAdminBooking('booking-1');
     expect(result.status).toBe('cancelled');
-  });
-
-  it('reassignAdminBooking PATCHes the new tableId', async () => {
-    server.use(
-      http.patch('http://localhost:3000/admin/bookings/booking-1', async ({ request: req }) => {
-        const body = await req.json();
-        expect(body).toEqual({ tableId: 9 });
-        return HttpResponse.json({ ...sampleBooking, tableId: 9 });
-      }),
-    );
-    const result = await reassignAdminBooking('booking-1', 9);
-    expect(result.tableId).toBe(9);
   });
 });

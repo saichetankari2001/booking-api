@@ -31,11 +31,3 @@ export function cancelAdminBooking(id: string): Promise<Booking> {
     authenticated: true,
   });
 }
-
-export function reassignAdminBooking(id: string, tableId: number): Promise<Booking> {
-  return request<Booking>(`/admin/bookings/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ tableId }),
-    authenticated: true,
-  });
-}

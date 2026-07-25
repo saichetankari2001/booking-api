@@ -97,4 +97,25 @@ describe('AdminTables', () => {
 
     expect(await screen.findByText('Table has future confirmed bookings')).toBeInTheDocument();
   });
+
+  it('shows a validation error when creating a table fails', async () => {
+    server.use(
+      http.get('http://localhost:3000/admin/tables', () => HttpResponse.json([table])),
+      http.post('http://localhost:3000/admin/tables', () =>
+        HttpResponse.json(
+          { error: 'ValidationError', message: 'A table with that name already exists' },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('Table 1');
+    await user.type(screen.getByLabelText('Name'), 'Table 1');
+    await user.type(screen.getByLabelText('Capacity'), '4');
+    await user.click(screen.getByRole('button', { name: 'Add table' }));
+
+    expect(await screen.findByText('A table with that name already exists')).toBeInTheDocument();
+  });
 });

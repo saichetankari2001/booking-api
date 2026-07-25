@@ -14,7 +14,12 @@ export default function Book() {
   const date = searchParams.get('date');
   const partySize = Number(searchParams.get('partySize'));
   const slotId = Number(searchParams.get('slotId'));
-  const hasValidParams = Boolean(date) && Number.isInteger(partySize) && Number.isInteger(slotId);
+  const hasValidParams =
+    Boolean(date) &&
+    Number.isInteger(partySize) &&
+    partySize > 0 &&
+    Number.isInteger(slotId) &&
+    slotId > 0;
 
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
 

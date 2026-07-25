@@ -96,4 +96,23 @@ describe('AdminSlots', () => {
 
     expect(await screen.findByText('Slot has future confirmed bookings')).toBeInTheDocument();
   });
+
+  it('shows an error when saving an edited slot fails', async () => {
+    server.use(
+      http.get('http://localhost:3000/admin/slots', () => HttpResponse.json([slot])),
+      http.patch('http://localhost:3000/admin/slots/1', () =>
+        HttpResponse.json(
+          { error: 'ValidationError', message: 'Start time overlaps another slot' },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Start time overlaps another slot')).toBeInTheDocument();
+  });
 });

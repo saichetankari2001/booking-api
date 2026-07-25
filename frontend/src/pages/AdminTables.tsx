@@ -23,6 +23,8 @@ export default function AdminTables() {
   const [editValues, setEditValues] = useState({ name: '', capacity: '', description: '' });
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const {
     register,
@@ -41,6 +43,7 @@ export default function AdminTables() {
   }
 
   function saveEdit(id: number) {
+    setEditError(null);
     updateTable.mutate(
       {
         id,
@@ -50,13 +53,23 @@ export default function AdminTables() {
           description: editValues.description,
         },
       },
-      { onSuccess: () => setEditingId(null) },
+      {
+        onSuccess: () => setEditingId(null),
+        onError: (err) => {
+          setEditError(err instanceof ApiError ? err.message : 'Could not save table.');
+        },
+      },
     );
   }
 
   async function onCreate(values: CreateTableFormInput) {
-    await createTable.mutateAsync(values);
-    reset();
+    try {
+      await createTable.mutateAsync(values);
+      setCreateError(null);
+      reset();
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : 'Could not create table.');
+    }
   }
 
   function confirmDelete() {
@@ -119,6 +132,12 @@ export default function AdminTables() {
         <Button type="submit">Add table</Button>
       </form>
 
+      {createError && (
+        <p role="alert" className="text-accent mb-4">
+          {createError}
+        </p>
+      )}
+
       {isLoading && <p>Loading tables…</p>}
       {isError && (
         <p role="alert" className="text-accent">
@@ -128,6 +147,11 @@ export default function AdminTables() {
       {deleteError && (
         <p role="alert" className="text-accent mb-4">
           {deleteError}
+        </p>
+      )}
+      {editError && (
+        <p role="alert" className="text-accent mb-4">
+          {editError}
         </p>
       )}
 
