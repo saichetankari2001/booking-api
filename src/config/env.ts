@@ -8,6 +8,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7),
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
 });
 
 export type Env = z.infer<typeof envSchema>;
