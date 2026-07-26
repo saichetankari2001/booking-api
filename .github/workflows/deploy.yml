@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to OCIR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.OCI_REGION }}.ocir.io
+          username: ${{ vars.OCI_NAMESPACE }}/${{ secrets.OCI_AUTH_USER }}
+          password: ${{ secrets.OCI_AUTH_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        run: |
+          IMAGE="${{ vars.OCI_REGION }}.ocir.io/${{ vars.OCI_NAMESPACE }}/booking-api:${{ github.sha }}"
+          LATEST="${{ vars.OCI_REGION }}.ocir.io/${{ vars.OCI_NAMESPACE }}/booking-api:latest"
+          docker build -t "$IMAGE" -t "$LATEST" -f Dockerfile .
+          docker push "$IMAGE"
+          docker push "$LATEST"
+
+      - name: Pull and restart the app container on the instance
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.OCI_INSTANCE_IP }}
+          username: ubuntu
+          key: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/booking-api
+            docker compose pull app
+            docker compose up -d
