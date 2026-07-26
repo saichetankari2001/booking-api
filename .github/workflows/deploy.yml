@@ -34,7 +34,14 @@ jobs:
           host: ${{ vars.OCI_INSTANCE_IP }}
           username: ubuntu
           key: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          envs: OCI_REGION,OCI_NAMESPACE,OCI_AUTH_USER,OCI_AUTH_TOKEN
           script: |
+            echo "$OCI_AUTH_TOKEN" | sudo docker login "$OCI_REGION.ocir.io" -u "$OCI_NAMESPACE/$OCI_AUTH_USER" --password-stdin
             cd /opt/booking-api
-            docker compose pull app
-            docker compose up -d
+            sudo docker compose pull app
+            sudo docker compose up -d
+        env:
+          OCI_REGION: ${{ vars.OCI_REGION }}
+          OCI_NAMESPACE: ${{ vars.OCI_NAMESPACE }}
+          OCI_AUTH_USER: ${{ secrets.OCI_AUTH_USER }}
+          OCI_AUTH_TOKEN: ${{ secrets.OCI_AUTH_TOKEN }}

@@ -33,11 +33,6 @@ variable "ssh_public_key" {
   description = "SSH public key to allow admin access to the compute instance"
 }
 
-variable "app_image" {
-  type        = string
-  description = "Full OCIR path of the app image the instance should run, e.g. <region>.ocir.io/<namespace>/booking-api:latest"
-}
-
 variable "jwt_secret" {
   type        = string
   description = "JWT_SECRET for the running app"

@@ -42,4 +42,5 @@ runcmd:
     volumes:
       postgres_data:
     EOF
+  - chmod 600 /opt/booking-api/docker-compose.yml
   - docker compose -f /opt/booking-api/docker-compose.yml up -d postgres
