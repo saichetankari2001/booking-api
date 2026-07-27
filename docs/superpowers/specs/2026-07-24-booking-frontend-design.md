@@ -14,11 +14,13 @@ The location precedent — a frontend living as a subfolder of the main repo —
 One combined React app in `frontend/`, not two separate apps. Admin routes are login-gated within the same app rather than deployed separately.
 
 **Guest flow (public, no login):**
+
 - `/` — pick date, party size, and time slot
 - `/book` — shows available tables for the chosen date/party size/slot; guest fills in name, email, phone (optional), notes (optional); submits. The date/party size/slot chosen on `/` are passed to `/book` as URL query params (e.g. `/book?date=...&partySize=...&slotId=...`), not client-side-only state — so `/book` is directly linkable/reloadable and doesn't depend on navigation history.
 - `/bookings/:id` — confirmation page showing booking details, with a cancel button
 
 **Admin (behind login):**
+
 - `/admin/login`
 - `/admin/bookings` — list, filter (by date/status/slot), cancel or reassign a booking
 - `/admin/tables` — CRUD
@@ -29,6 +31,7 @@ One combined React app in `frontend/`, not two separate apps. Admin routes are l
 Direction: **upscale & calm**, applied consistently across guest and admin (admin uses denser table/filter layouts, not a different visual language).
 
 **Palette — "Terracotta & Linen":**
+
 - Background: `#faf6f0` (warm off-white)
 - Accent: `#b5502f` (terracotta)
 - Text: `#2b2521` (charcoal)
@@ -53,6 +56,7 @@ Direction: **upscale & calm**, applied consistently across guest and admin (admi
 **Forms:** React Hook Form + Zod. Zod schemas in `frontend/src/lib/schemas/` mirror the backend's `src/schemas/` validation shapes (duplicated by hand — no shared package/monorepo tooling exists to share them directly).
 
 **Admin authentication:**
+
 - Access token held in-memory only, in a React context (`AdminAuthContext`) — never written to disk.
 - Refresh token stored in `localStorage` (required to survive a page reload, since the access token doesn't).
 - On app load, the admin area calls `POST /auth/refresh` once using the stored refresh token to silently re-establish a session if one exists. If it fails or no refresh token is present, the user is treated as logged out.
@@ -60,6 +64,7 @@ Direction: **upscale & calm**, applied consistently across guest and admin (admi
 - A `RequireAdmin` route wrapper blocks rendering of any `/admin/*` page (other than `/admin/login`) until the initial silent-refresh attempt resolves, then redirects to `/admin/login` if there's no valid access token.
 
 **Folder structure:**
+
 ```
 frontend/src/
   pages/          # Home, Book, BookingConfirmation, AdminLogin, AdminBookings, AdminTables, AdminSlots
