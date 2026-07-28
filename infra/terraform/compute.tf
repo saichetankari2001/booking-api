@@ -13,7 +13,7 @@ data "oci_core_images" "ubuntu_arm" {
 
 resource "oci_core_instance" "booking_api" {
   compartment_id      = var.compartment_ocid
-  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[var.availability_domain_index].name
   display_name        = "booking-api-instance"
   shape               = "VM.Standard.A1.Flex"
 

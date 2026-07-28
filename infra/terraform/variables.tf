@@ -44,3 +44,9 @@ variable "postgres_password" {
   description = "Password for the self-hosted postgres container"
   sensitive   = true
 }
+
+variable "availability_domain_index" {
+  type        = number
+  description = "Index into the region's availability domains list (0, 1, 2, ...) to try for the compute instance. Lets retries cycle through ADs when one reports 'Out of host capacity'."
+  default     = 0
+}
