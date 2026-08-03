@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { env } from './config/env';
 import { healthRouter } from './routes/health.routes';
+import { helloRouter } from './routes/hello.routes';
 import { authRouter } from './routes/auth.routes';
 import { tableRouter } from './routes/table.routes';
 import { slotRouter } from './routes/slot.routes';
@@ -14,6 +15,7 @@ export function createApp(): Express {
   app.use(cors({ origin: env.CORS_ORIGIN }));
   app.use(express.json());
   app.use(healthRouter);
+  app.use(helloRouter);
   app.use(authRouter);
   app.use(tableRouter);
   app.use(slotRouter);
